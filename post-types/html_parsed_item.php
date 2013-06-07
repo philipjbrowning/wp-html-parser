@@ -133,7 +133,7 @@ if(!class_exists('HTML_Parsed_Item'))
 		public function add_inner_meta_boxes($post)
 		{		
 			// Render the job order metabox
-			include(sprintf("%s/../templates/%s_metabox.php", dirname(__FILE__), self::POST_TYPE));			
+			include(sprintf("%s/../templates/%s_metabox.php", dirname(__FILE__), str_replace(" ", "_", strtolower(self::POST_TYPE))));			
 		}
 		// END of add_inner_meta_boxes($post)
 	}
