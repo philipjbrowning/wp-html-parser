@@ -60,6 +60,21 @@ if(!class_exists('WP_HTML_Parser_Settings'))
 		/**
 		 * [Description]
 		 */
+		public function html_parser_settings_page()
+		{
+			// Restrict access only to admin
+			if(!current_user_can('manage_options'))
+			{
+				wp_die(___('You do not have sufficient permissions to access this page.'));
+			}
+			
+			// Render the settings template
+			include(sprintf("%s/templates/settings.php", dirname(__FILE__)));
+		}
+		
+		/**
+		 * [Description]
+		 */
 		public function init_settings()
 		{
 			register_setting('wp_html_parser-group', 'setting_a');

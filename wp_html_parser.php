@@ -67,23 +67,6 @@ if(!class_exists('WP_HTML_Parser'))
 			// Do nothing
 		}
 		// END of deactivate()
-		
-		
-		/**
-		 * [Description]
-		 */
-		public function html_parser_settings_page()
-		{
-			// Restrict access only to admin
-			if(!current_user_can('manage_options'))
-			{
-				wp_die(___('You do not have sufficient permissions to access this page.'));
-			}
-			
-			// Render the settings template
-			include(sprintf("%s/templates/settings.php", dirname(__FILE__)));
-		}
-		// END of html_parser_settings_page()
 	}
 	// END class WP_HTML_Parser	
 }
@@ -100,18 +83,18 @@ if(class_exists('WP_HTML_Parser'))
 	$wp_html_parser = new WP_HTML_Parser();
 	
 	if(isset($wp_html_parser))
-	{
-		// Add the settings link to the plugin page
-		function plugin_settings_link($links)
-		{
-			$settings_link = '<a href="options-genera.php?page=wp_html_parser">Settings</a>';
-			array_unshift($links, $settings_link);
-			return $links;
-		}
-		
-		$plugin = plugin_basename(__FILE__);
-		add_filter("plugin_action_links$plugin", 'plugin_settings_link');
-	}
+    {
+        // Add the settings link to the plugins page
+        function wp_html_parser_settings_link($links)
+        { 
+            $settings_link = '<a href="options-general.php?page=wp_html_parser">Settings</a>';
+            array_unshift($links, $settings_link); 
+            return $links; 
+        }
+
+        $plugin = plugin_basename(__FILE__); 
+        add_filter("plugin_action_links_$plugin", 'wp_html_parser_settings_link');
+    }
 }
 // END of if(class_exists('WP_HTML_Parser'))
 ?>
