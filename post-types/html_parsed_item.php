@@ -26,9 +26,9 @@ if(!class_exists('HTML_Parsed_Item'))
 	{
 		 const POST_TYPE = "HTML Parsed Item";
 		 private $_meta = array(
-		 	'meta_a',
-		 	'meta_b',
-		 	'meta_c'
+		 	'amazon_price',
+		 	'seller_new_price',
+		 	'seller_used_price'
 		);
 		
 		/**
@@ -109,7 +109,8 @@ if(!class_exists('HTML_Parsed_Item'))
     	{			
     		// Add metaboxes
     		add_action('add_meta_boxes', array(&$this, 'add_meta_boxes'));
-    	} // END of admin_init()
+    	}
+		// END of admin_init()
 
 
     	/**
@@ -124,7 +125,8 @@ if(!class_exists('HTML_Parsed_Item'))
     			array(&$this, 'add_inner_meta_boxes'),
     			self::POST_TYPE
     	    );					
-    	} // END of add_meta_boxes()
+    	}
+		// END of add_meta_boxes()
 		
 		
 		/**

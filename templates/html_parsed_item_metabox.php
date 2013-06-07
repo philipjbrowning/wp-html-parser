@@ -21,26 +21,26 @@
 <table> 
     <tr valign="top">
         <th class="metabox_label_column">
-            <label for="meta_a">Meta A</label>
+            <label for="amazon_price">Amazon Price</label>
         </th>
         <td>
-            <input type="text" id="meta_a" name="meta_a" value="<?php echo @get_post_meta($post->ID, 'meta_a', true); ?>" />
+            <input type="text" id="amazon_price" name="amazon_price" value="<?php echo @get_post_meta($post->ID, 'amazon_price', true); ?>" />
         </td>
     <tr>
     <tr valign="top">
         <th class="metabox_label_column">
-            <label for="meta_a">Meta B</label>
+            <label for="seller_new_price">Seller Price (New)</label>
         </th>
         <td>
-            <input type="text" id="meta_b" name="meta_b" value="<?php echo @get_post_meta($post->ID, 'meta_b', true); ?>" />
+            <input type="text" id="seller_new_price" name="seller_new_price" value="<?php echo @get_post_meta($post->ID, 'seller_new_price', true); ?>" />
         </td>
     <tr>
     <tr valign="top">
         <th class="metabox_label_column">
-            <label for="meta_a">Meta C</label>
+            <label for="seller_used_price">Seller Price (Used)</label>
         </th>
         <td>
-            <input type="text" id="meta_c" name="meta_c" value="<?php echo @get_post_meta($post->ID, 'meta_c', true); ?>" />
+            <input type="text" id="seller_used_price" name="seller_used_price" value="<?php echo @get_post_meta($post->ID, 'seller_used_price', true); ?>" />
         </td>
     <tr>                
 </table>
