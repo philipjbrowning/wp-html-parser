@@ -33,6 +33,34 @@ if(!class_exists('WP_HTML_Parser'))
 {
 	class WP_HTML_Parser
 	{
+		/* ==================================================================================================== *
+		 * PRIVATE VARIABLE DECLARATIONS                                                                        *
+		 * ==================================================================================================== */
+		
+		private $website_HTML = "";
+		
+		private $valid_HTML_tags = array(
+		 	'a',
+		 	'body',
+		 	'div',
+		 	'head',
+		 	'script',
+		 	'span',
+		 	'style',
+		 	'table',
+		 	'tbody',
+		 	'td',
+		 	'tfoot',
+		 	'thead',
+		 	'th',
+		 	'tr'
+		);
+		
+		
+		/* ==================================================================================================== *
+		 * PUBLIC FUNCTION DECLARATIONS                                                                         *
+		 * ==================================================================================================== */
+	 	
 		/**
 		 * Construct the plugin object
 		 */
@@ -67,6 +95,226 @@ if(!class_exists('WP_HTML_Parser'))
 			// Do nothing
 		}
 		// END of deactivate()
+		
+		
+		/**
+		 * Gets the HTML code pulled from a URL.
+		 *
+		 * @return:  [string] HTML code, if matching start and end tags are found.
+		 *           [bool] false, if the start tag was not found, or a matching end tag was not found.
+		 */
+		public function get_HTML_within_tag($tag_name, $offset=0)
+		{
+			if ($start = $this->get_tag_start_position($tag_name, $offset))
+			{
+				if ($end = $this->get_tag_end_position($tag_name, $offset))
+				{
+					return $this->get_the_HTML($start, $end);
+				}
+				return false;
+			}
+			return false;
+		}
+		// END of get_HTML_within_tag($tag_name, $offset=0)
+		
+		
+		/**
+		 * Returns the end position of a specific tag in $this->website_HTML.
+		 *
+		 * @return:  [int] if the tag exists within $this->website_HTML
+		 *           [bool] false, if the tag does not exist within $this->website_HTML
+		 */
+		public function get_tag_end_position($tag_name, $html_offset=0)
+		{
+			if ($this->invalid_tag_name($tag_name))
+			{
+				return false;
+			}
+			return $this->get_tag_end_position_from_html($this->website_HTML, $tag_name, $html_offset);
+		}
+		// END of get_tag_end_position($tag_name, $html_offset=0)
+		
+		
+		/**
+		 * Returns the start position of a specific tag in $this->website_HTML.
+		 *
+		 * @return:  [int] if the tag exists within $this->website_HTML
+		 *           [bool] false, if the tag does not exist within $this->website_HTML
+		 */
+		public function get_tag_start_position($tag_name, $html_offset=0)
+		{
+			if ($this->invalid_tag_name($tag_name))
+			{
+				return false;
+			}
+			return $this->get_tag_start_position_from_html($this->website_HTML, $tag_name, $html_offset);
+		}
+		// END of get_tag_start_position($tag_name, $html_offset=0)
+		
+		
+		/**
+		 * Prints the HTML code pulled from a URL.
+		 */
+		public function print_all_HTML()
+		{
+			print_r( $this->website_HTML );
+		}
+		// END of print_all_HTML()
+		
+		
+		/**
+		 * Prints the HTML code within a specific tag in $website_HTML
+		 */
+		public function print_HTML_within_tag($tag_name, $offset=0)
+		{
+			print_r($this->get_HTML_within_tag($tag_name, $offset));
+		}
+		// END of print_HTML_within_tag($tag_name, $offset=0)
+		
+		
+		/**
+		 * Prints all the HTML code within a range in $website_HTML.
+		 */
+		public function print_the_HTML($from, $to)
+		{
+			print_r($this->get_the_HTML($from, $to));
+		}
+		// END of print_the_HTML($from, $to)
+		
+		
+		/**
+		 * Saves HTML code within the body tags in to the $website_HTML variable as a string.
+		 *
+		 * @return:   [bool] true if the new HTML code was saved
+		 *            [bool] false if the new HTML code was not saved
+		 */
+		public function save_HTML($new_URL)
+		{
+			if(is_string($new_URL)) {
+				$this->website_HTML = (string)file_get_contents($new_URL);
+				return true;
+			}
+			return false;
+		}
+		// END of save_HTML($new_URL)
+		
+		
+		/* ==================================================================================================== *
+		 * PRIVATE FUNCTION DECLARATIONS                                                                        *
+		 * ==================================================================================================== */
+		
+		
+		/**
+		 * Returns a subset of the HTML code saved between two index values.
+		 * 
+		 * @return:  [string] HTML code
+		 *           [bool] false, if there are no values in the range or invalid input ($to value is less than $from)
+		 */
+		private function get_the_HTML($from, $to)
+		{
+			$length = $to - $from;
+			if ($length > 0) {
+				return htmlentities(substr($this->website_HTML, $from, $length));
+			}
+			return false;
+		}
+		// END of get_the_HTML($from, $to)
+		
+		
+		/**
+		 * Finds the first occurnace of a tag within an HTML block.
+		 *
+		 * @return:  [int] position of the tag, if the tag exists within $website_HTML
+		 *           [bool] false, if the tag does not exist within $website_HTML. This mirrors the stripos() function.
+		 */
+		private function get_tag_start_position_from_html($html_block, $tag_name, $html_offset=0)
+		{
+			if ($this->invalid_tag_name($tag_name))
+			{
+				return false;
+			}
+			return stripos($html_block, "<".$tag_name, $html_offset);
+		}
+		// END of get_tag_start_position_from_html($html_block, $tag_name, $html_offset=0)
+		
+		
+		/**
+		 * Finds the end position of a tag within an HTML block.
+		 *
+		 * @return:  [int] position of the tag, if the tag exists within $website_HTML
+		 *           [bool] false if the tag does not exist within $website_HTML
+		 */
+		private function get_tag_end_position_from_html($html_block, $tag_name, $html_offset=0)
+		{
+			if ($this->invalid_tag_name($tag_name))
+			{
+				return false;
+			}
+			$tag_length = strlen($tag_name);
+			$start_position = $this->get_tag_start_position_from_html($html_block, $tag_name, $html_offset);
+			if ($this->get_tag_start_position_from_html($html_block, $tag_name, $html_offset))
+			{ // If there is a start of the tag...
+				$end_position = stripos($html_block, ">", $start_position);
+				if (is_bool($end_position))
+				{
+					$end_position = strlen($this->website_HTML);
+				}
+				if (substr($html_block, ($end_position - 1), 1) == '/')
+				{// If the previous space contains the character '/'...
+					return $end_position + 1;
+				}
+				else 
+				{// If the previous space does not contain the character '/'...
+					$temp_start_position = $end_position;
+					$temp_end_position = $end_position;
+					$matching_tags = false;
+					while($matching_tags == false)
+					{
+						$next_end_position = stripos($html_block, "</".$tag_name.">", $temp_end_position);
+						$next_start_position = stripos($html_block, "<".$tag_name, $temp_start_position);
+						
+						if ((int)$next_end_position < (int)$next_start_position) 
+						{// If there are no more start tags...
+							$matching_tags = true;
+							return $next_end_position + $tag_length + 3;
+						} else {
+							$temp_end_position = $next_end_position + $tag_length + 3;
+							$temp_start_position = $next_start_position + $tag_length + 2;
+						}
+					}
+				}
+				echo '<pre><p>ERROR: No end tag for "'.$tag_name.'" was found in this code.</p></pre>';
+				return false;
+			}
+			echo '<pre><p>ERROR: The tag "'.$tag_name.'" does not exist in this code.</p></pre>';
+			return false;
+		}
+		// END of get_tag_end_position_from_html($html_block, $tag_name, $html_offset=0)
+		
+		
+		/**
+		 * Determines if a tag name cannot be used by this class
+		 *
+		 * @return:  [bool] true, if the tag CANNOT be used.
+		 *           [bool] false, if the tag CAN be used.
+		 */
+		private function invalid_tag_name($tag_name)
+		{
+			$is_invalid = true;
+			$i = 0;
+			while ($i < count($this->valid_HTML_tags))
+			{
+				if ($tag_name == $this->valid_HTML_tags[$i])
+				{
+					return false;
+				}
+				$i++;
+			}
+			echo '<pre><p>ERROR: Invalid tag "'.$tag_name.'" name used. Only "a", "body", "div", "head", "script", ';
+			echo '"span", "style", "table", "tbody", "tfoot", "thead", "td", "th", and "tr" can be used.</p></pre>';
+			return true;
+		}
+		// END of invalid_tag_name($tag_name)
 	}
 	// END class WP_HTML_Parser	
 }
