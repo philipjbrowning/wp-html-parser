@@ -225,12 +225,22 @@ if(!class_exists('WP_HTML_Parser'))
 		
 		
 		/**
+		 * Saves HTML code.
+		 */
+		public function save_HTML($new_HTML)
+		{
+			$this->website_HTML = (string)$new_HTML;
+		}
+		// END of save_HTML($new_URL)
+		
+		
+		/**
 		 * Saves HTML code within the body tags in to the $website_HTML variable as a string.
 		 *
 		 * @return:   [bool] true if the new HTML code was saved
 		 *            [bool] false if the new HTML code was not saved
 		 */
-		public function save_HTML($new_URL)
+		public function save_HTML_with_URL($new_URL)
 		{
 			if(is_string($new_URL)) {
 				$this->website_HTML = (string)file_get_contents($new_URL);
@@ -238,7 +248,7 @@ if(!class_exists('WP_HTML_Parser'))
 			}
 			return false;
 		}
-		// END of save_HTML($new_URL)
+		// END of save_HTML_with_URL($new_URL)
 		
 		
 		/* ==================================================================================================== *
