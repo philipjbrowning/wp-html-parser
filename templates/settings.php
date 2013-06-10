@@ -20,18 +20,26 @@
 <!-- =========================================================================================== -->
 <!-- Settings page for the HTML Parser plugin -->
 <div class="wrap">
-	<h2>WP Plugin Template</h2>
-    <form method="post" action="../../html-parser/templates/options.php">
+	<div id="icon-options-general" class="icon32">
+		<br/>
+	</div>
+	<h2>WP HTML Parser Settings</h2>
+    <form method="post" action="options.php">
 		<?php @settings_fields('wp_html_parser-group'); ?>
 		<?php @do_settings_fields('wp_html_parser-group'); ?>
+        <h3>Information Source</h3>
     	<table class="form-table">
         	<tr valign="top">
-        		<th scope="row"><label for="setting_a">Setting A</label></th>
-            	<td><input type="text" name="setting_a" id="setting_a" value="<?php echo get_option('setting_a'); ?>" /></td>
+        		<th scope="row"><label for="source_title">Title</label></th>
+            	<td><p id="source_title" class="description"><?php echo get_option('source_title'); ?></p></td>
         	</tr>
         	<tr valign="top">
-        		<th scope="row"><label for="setting_b">Setting B</label></th>
-            	<td><input type="text" name="setting_b" id="setting_b" value="<?php echo get_option('setting_b'); ?>" /></td>
+        		<th scope="row"><label for="source_URL">URL</label></th>
+            	<td><input type="text" name="source_URL" id="source_URL" class="regular-text code" value="<?php echo get_option('source_URL'); ?>" /></td>
+        	</tr>
+            <tr valign="top">
+        		<th scope="row"><label for="search_keyword">Search Keyword</label></th>
+            	<td><input type="text" name="search_keyword" id="search_keyword" class="regular-text code" value="<?php echo get_option('search_keyword'); ?>" /></td>
         	</tr>
         </table>
 		<?php @submit_button(); ?>

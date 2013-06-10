@@ -77,8 +77,9 @@ if(!class_exists('WP_HTML_Parser_Settings'))
 		 */
 		public function init_settings()
 		{
-			register_setting('wp_html_parser-group', 'setting_a');
-			register_setting('wp_html_parser-group', 'setting_b');
+			register_setting('wp_html_parser-group', 'search_keyword');
+			register_setting('wp_html_parser-group', 'source_URL');
+			register_setting('wp_html_parser-group', 'source_title');
 		}
 		// END of init_settings()
 	}

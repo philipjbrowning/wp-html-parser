@@ -53,6 +53,7 @@ if(!class_exists('WP_HTML_Parser'))
 		 	'tfoot',
 		 	'thead',
 		 	'th',
+			'title',
 		 	'tr'
 		);
 		
@@ -103,19 +104,44 @@ if(!class_exists('WP_HTML_Parser'))
 		 * @return:  [string] HTML code, if matching start and end tags are found.
 		 *           [bool] false, if the start tag was not found, or a matching end tag was not found.
 		 */
-		public function get_HTML_within_tag($tag_name, $offset=0)
+		public function get_HTML_within_tag($tag_name, $html_offset=0)
 		{
-			if ($start = $this->get_tag_start_position($tag_name, $offset))
+			echo '<p>get_HTML_within_tag</p>';
+			if ($start = $this->get_tag_start_position($tag_name, $html_offset))
 			{
-				if ($end = $this->get_tag_end_position($tag_name, $offset))
+				echo '<p>$start = ' . $start . '</p>';
+				if ($end = $this->get_tag_end_position($tag_name, $html_offset))
 				{
+					echo '<p>$end = ' . $end . '</p>';
 					return $this->get_the_HTML($start, $end);
 				}
+				echo '<p>No end tag found.</p>';
 				return false;
 			}
+			echo '<p>No start tag found.</p>';
 			return false;
 		}
 		// END of get_HTML_within_tag($tag_name, $offset=0)
+		
+		
+		/**
+		 * [Description]
+		 *
+		 * @return:  [string]
+		 *           [bool] false
+		 */
+		public function get_HTML_content_within_tag($tag_name, $html_offset=0)
+		{
+			$html_block = $this->get_HTML_within_tag($tag_name, $html_offset); // ------------------- BUG --------------
+			echo '<p>$html_block = '.htmlentities($html_block).'</p>';
+			$start = stripos($html_block, ">") + 1;
+			echo '<p>$start = '.htmlentities($start).'</p>';
+			$end = strrchr($html_block , "</".$tag_name);
+			echo '<p>$end = strrchr($html_block , '.htmlentities("</".$tag_name).') = '.htmlentities($end).'</p>';
+			$length = $end - $start;
+			echo '<p>$length = '.htmlentities($length).'</p>';
+			return substr($html_block, $start, $length);
+		}
 		
 		
 		/**
@@ -212,6 +238,16 @@ if(!class_exists('WP_HTML_Parser'))
 			print_r($this->get_HTML_within_tag($tag_name, $offset));
 		}
 		// END of print_HTML_within_tag($tag_name, $offset=0)
+		
+		
+		/**
+		 * Prints the HTML code within a specific tag in $website_HTML
+		 */
+		public function print_HTML_content_within_tag($tag_name, $offset=0)
+		{
+			print_r($this->get_HTML_content_within_tag($tag_name, $offset));
+		}
+		// END of print_HTML_content_within_tag($tag_name, $offset=0)
 		
 		
 		/**
@@ -327,12 +363,19 @@ if(!class_exists('WP_HTML_Parser'))
 				}
 				else 
 				{// If the previous space does not contain the character '/'...
+					$next_end_position = stripos($html_block, "</".$tag_name.">", $end_position);
+					$next_start_position = stripos($html_block, "<".$tag_name, $start_position + $tag_length);
+					if(!$next_start_position)
+					{
+						return $next_end_position + $tag_length + 3;
+					}
+					// ---------------------------------------------
 					$temp_start_position = $end_position;
 					$temp_end_position = $end_position;
 					$matching_tags = false;
 					while($matching_tags == false)
 					{
-						$next_end_position = stripos($html_block, "</".$tag_name.">", $temp_end_position);
+						$next_end_position = stripos($html_block, "</".$tag_name.">", $temp_end_position);						
 						$next_start_position = stripos($html_block, "<".$tag_name, $temp_start_position);
 						
 						if ((int)$next_end_position < (int)$next_start_position) 
