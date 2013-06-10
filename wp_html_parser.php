@@ -153,6 +153,48 @@ if(!class_exists('WP_HTML_Parser'))
 		
 		
 		/**
+		 * Returns the start position of the first tag with a specific class name in $this->website_HTML
+		 */
+		public function get_tag_start_position_with_class($tag_name, $class_value, $html_offset=0)
+		{
+			$current_offset = $html_offset;
+			do
+			{
+				if ($current_position = $this->get_tag_start_position($tag_name, $current_offset))
+				{
+					if($this->tag_has_class($class_value, $current_position))
+					{
+						return $current_position;
+					} else {
+						$current_offset = stripos($this->website_HTML, ">", $current_position);
+					}
+					
+				}
+				else
+				{
+					return false;
+				}
+			} while ($current_offset < strlen($this->website_HTML));
+			
+		}
+		// END of get_tag_start_position_with_class($tag_name, $class_name, $html_offset=0)
+		
+		
+		/**
+		 * Returns the start position of the first tag with a specific id name in $this->website_HTML
+		 */
+		public function get_tag_start_position_with_id($tag_name, $id_name, $html_offset=0)
+		{
+			return false;
+			
+			
+			// 
+			// while ($current_offset
+		}
+		// END of get_tag_start_position_with_id($tag_name, $id_name, $html_offset=0)
+		
+		
+		/**
 		 * Prints the HTML code pulled from a URL.
 		 */
 		public function print_all_HTML()
@@ -202,6 +244,16 @@ if(!class_exists('WP_HTML_Parser'))
 		/* ==================================================================================================== *
 		 * PRIVATE FUNCTION DECLARATIONS                                                                        *
 		 * ==================================================================================================== */
+		
+		
+		/**
+		 * Returns the string value of true or false of a boolean expression.
+		 * 
+		 * @return:  [string] 'true' or 'false'
+		 */
+		private function boolString($bValue = false) {
+			return ($bValue ? 'true' : 'false');
+		}
 		
 		
 		/**
@@ -315,6 +367,67 @@ if(!class_exists('WP_HTML_Parser'))
 			return true;
 		}
 		// END of invalid_tag_name($tag_name)
+		
+		
+		private function tag_has_class($class_value, $start)
+		{
+			return $this->tag_has_attribute($class_value, "class", $start);
+		}
+		
+		
+		
+		private function tag_has_id($id_value, $start)
+		{
+			return $this->tag_has_attribute($id_value, "id", $start);
+		}
+		
+		
+		
+		/**
+		 * [Description]
+		 *
+		 * @preconditions:  The first element $this->website_HTML[$htmloffset] = '<'.
+		 * @return:         [bool] true, if there is a tag attribute with an $attribute_value.
+		 *                  [bool] false, if there is no tag attribute with an $attribute_value.
+		 */
+		private function tag_has_attribute($attribute_value, $attribute_name, $start)
+		{
+			$end = stripos($this->website_HTML, ">", $start);
+			$length = $end - $start + 1;
+			$opening_tag = substr($this->website_HTML, $start, $length);
+			if ($attribute_start = stripos($opening_tag, $attribute_name))
+			{
+				// This tag has an attribute of some name...
+				$quote = "";
+				$quote_start = "";
+				$double_quote_start = stripos($opening_tag, '"', $attribute_start); // Plus 1 for the equal's sign or space
+				$single_quote_start = stripos($opening_tag, "'", $attribute_start);
+				if(($double_quote_start && !$single_quote_start) || ((int)$double_quote_start > (int)$single_quote_start))
+				{
+					$quote = '"';
+					$quote_start = $double_quote_start;
+				}
+				else
+				{
+					$quote = "'";
+					$quote_start = $single_quote_start;
+				}
+				$quote_end = stripos($opening_tag, $quote, $quote_start+1);
+				$length = $quote_end - $quote_start + 1;
+				$attribute_values = substr($opening_tag, $quote_start, $length);
+				
+				if ($attribute_value_start = stripos($attribute_values, $attribute_value))
+				{
+					$next_character = $attribute_values[$attribute_value_start + strlen($attribute_value)];
+					if (($next_character == $quote) || ($next_character == " "))
+					{// The next character should be a quote or a space. Then we have a match.
+						return true;
+					}
+				}
+				return false;
+			}
+			return false;
+		}
 	}
 	// END class WP_HTML_Parser	
 }
