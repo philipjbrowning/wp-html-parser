@@ -32,8 +32,50 @@
 if(!class_exists('WP_HTML_Parser'))
 {
 	class WP_HTML_Parser
-	{
+	{	
 		/* ==================================================================================================== *
+		 * SUMMARY OF THE WP_HTML_PARSER CLASS                                                                  *
+		 * ==================================================================================================== *
+		
+			----------------
+			Public Varibales
+			----------------
+			
+			(string) website_HTML;
+			(array) valid_HTML_tags;
+			
+			----------------
+			Public Functions
+			----------------
+			
+			__construct()
+			activate()
+			deactivate()
+			get_HTML_within_tag( $tag_name, $html_offset=0 )
+			get_tag_end_position( $tag_name, $html_offset=0 )
+			get_tag_start_position( $tag_name, $html_offset=0 )
+			get_tag_start_position_with_attribute_name_and_value( $tag_name, $attribute_name, $attribute_value, $html_offset=0 )
+			
+			print_all_HTML()
+			print_HTML_within_tag( $tag_name, $offset=0)
+			print_HTML_content_within_tag( $tag_name, $offset=0 )
+			print_the_HTML( $from, $to )
+			
+			save_HTML( $new_HTML )
+			save_HTML_with_URL( $new_URL )
+			
+			-----------------
+			Private Functions
+			-----------------
+			
+			boolString( $bValue = false ) {
+			get_the_HTML( $from, $to )
+			get_tag_start_position_from_html( $html_block, $tag_name, $html_offset=0 )
+			get_tag_end_position_from_html( $html_block, $tag_name, $html_offset=0 )
+			invalid_tag_name( $tag_name )
+			tag_has_attribute( $attribute_value, $attribute_name, $start )
+		
+		 * ==================================================================================================== *
 		 * PRIVATE VARIABLE DECLARATIONS                                                                        *
 		 * ==================================================================================================== */
 		
@@ -106,19 +148,16 @@ if(!class_exists('WP_HTML_Parser'))
 		 */
 		public function get_HTML_within_tag($tag_name, $html_offset=0)
 		{
-			echo '<p>get_HTML_within_tag</p>';
 			if ($start = $this->get_tag_start_position($tag_name, $html_offset))
 			{
-				echo '<p>$start = ' . $start . '</p>';
 				if ($end = $this->get_tag_end_position($tag_name, $html_offset))
 				{
-					echo '<p>$end = ' . $end . '</p>';
 					return $this->get_the_HTML($start, $end);
 				}
-				echo '<p>No end tag found.</p>';
+				echo '<p><u>ERROR</u>: No end tag found.</p>';
 				return false;
 			}
-			echo '<p>No start tag found.</p>';
+			echo '<p><u>ERROR</u>: No start tag found.</p>';
 			return false;
 		}
 		// END of get_HTML_within_tag($tag_name, $offset=0)
@@ -132,14 +171,10 @@ if(!class_exists('WP_HTML_Parser'))
 		 */
 		public function get_HTML_content_within_tag($tag_name, $html_offset=0)
 		{
-			$html_block = $this->get_HTML_within_tag($tag_name, $html_offset); // ------------------- BUG --------------
-			echo '<p>$html_block = '.htmlentities($html_block).'</p>';
+			$html_block = $this->get_HTML_within_tag($tag_name, $html_offset);
 			$start = stripos($html_block, ">") + 1;
-			echo '<p>$start = '.htmlentities($start).'</p>';
-			$end = strrchr($html_block , "</".$tag_name);
-			echo '<p>$end = strrchr($html_block , '.htmlentities("</".$tag_name).') = '.htmlentities($end).'</p>';
+			$end = strripos($html_block , "</".$tag_name);
 			$length = $end - $start;
-			echo '<p>$length = '.htmlentities($length).'</p>';
 			return substr($html_block, $start, $length);
 		}
 		
@@ -179,22 +214,21 @@ if(!class_exists('WP_HTML_Parser'))
 		
 		
 		/**
-		 * Returns the start position of the first tag with a specific class name in $this->website_HTML
+		 * [Description]
 		 */
-		public function get_tag_start_position_with_class($tag_name, $class_value, $html_offset=0)
+		public function get_tag_start_position_with_attribute_name_and_value($tag_name, $attribute_name, $attribute_value, $html_offset=0)
 		{
 			$current_offset = $html_offset;
 			do
 			{
 				if ($current_position = $this->get_tag_start_position($tag_name, $current_offset))
 				{
-					if($this->tag_has_class($class_value, $current_position))
+					if($this->tag_has_attribute_name_and_value($attribute_name, $attribute_value, $current_position))
 					{
 						return $current_position;
 					} else {
 						$current_offset = stripos($this->website_HTML, ">", $current_position);
 					}
-					
 				}
 				else
 				{
@@ -202,22 +236,9 @@ if(!class_exists('WP_HTML_Parser'))
 				}
 			} while ($current_offset < strlen($this->website_HTML));
 			
+			// tag_has_attribute_name_and_value($attribute_value, $attribute_name, $start)
 		}
-		// END of get_tag_start_position_with_class($tag_name, $class_name, $html_offset=0)
-		
-		
-		/**
-		 * Returns the start position of the first tag with a specific id name in $this->website_HTML
-		 */
-		public function get_tag_start_position_with_id($tag_name, $id_name, $html_offset=0)
-		{
-			return false;
-			
-			
-			// 
-			// while ($current_offset
-		}
-		// END of get_tag_start_position_with_id($tag_name, $id_name, $html_offset=0)
+		// END of get_tag_start_position_with_attribute_name_and_value($tag_name, $attribute_name, $attribute_value, $html_offset=0)
 		
 		
 		/**
@@ -297,9 +318,10 @@ if(!class_exists('WP_HTML_Parser'))
 		 * 
 		 * @return:  [string] 'true' or 'false'
 		 */
-		private function boolString($bValue = false) {
+		private function boolString( $bValue = false ) {
 			return ($bValue ? 'true' : 'false');
 		}
+		// END of boolString( $bValue = false )
 		
 		
 		/**
@@ -308,11 +330,11 @@ if(!class_exists('WP_HTML_Parser'))
 		 * @return:  [string] HTML code
 		 *           [bool] false, if there are no values in the range or invalid input ($to value is less than $from)
 		 */
-		private function get_the_HTML($from, $to)
+		private function get_the_HTML( $from, $to )
 		{
 			$length = $to - $from;
 			if ($length > 0) {
-				return htmlentities(substr($this->website_HTML, $from, $length));
+				return substr($this->website_HTML, $from, $length); // ---------- REMOVED htmlentities() -------------------------------------------------
 			}
 			return false;
 		}
@@ -325,7 +347,7 @@ if(!class_exists('WP_HTML_Parser'))
 		 * @return:  [int] position of the tag, if the tag exists within $website_HTML
 		 *           [bool] false, if the tag does not exist within $website_HTML. This mirrors the stripos() function.
 		 */
-		private function get_tag_start_position_from_html($html_block, $tag_name, $html_offset=0)
+		private function get_tag_start_position_from_html( $html_block, $tag_name, $html_offset=0 )
 		{
 			if ($this->invalid_tag_name($tag_name))
 			{
@@ -333,7 +355,7 @@ if(!class_exists('WP_HTML_Parser'))
 			}
 			return stripos($html_block, "<".$tag_name, $html_offset);
 		}
-		// END of get_tag_start_position_from_html($html_block, $tag_name, $html_offset=0)
+		// END of get_tag_start_position_from_html( $html_block, $tag_name, $html_offset=0 )
 		
 		
 		/**
@@ -342,7 +364,7 @@ if(!class_exists('WP_HTML_Parser'))
 		 * @return:  [int] position of the tag, if the tag exists within $website_HTML
 		 *           [bool] false if the tag does not exist within $website_HTML
 		 */
-		private function get_tag_end_position_from_html($html_block, $tag_name, $html_offset=0)
+		private function get_tag_end_position_from_html( $html_block, $tag_name, $html_offset=0 )
 		{
 			if ($this->invalid_tag_name($tag_name))
 			{
@@ -394,7 +416,7 @@ if(!class_exists('WP_HTML_Parser'))
 			echo '<pre><p>ERROR: The tag "'.$tag_name.'" does not exist in this code.</p></pre>';
 			return false;
 		}
-		// END of get_tag_end_position_from_html($html_block, $tag_name, $html_offset=0)
+		// END of get_tag_end_position_from_html( $html_block, $tag_name, $html_offset=0 )
 		
 		
 		/**
@@ -403,7 +425,7 @@ if(!class_exists('WP_HTML_Parser'))
 		 * @return:  [bool] true, if the tag CANNOT be used.
 		 *           [bool] false, if the tag CAN be used.
 		 */
-		private function invalid_tag_name($tag_name)
+		private function invalid_tag_name( $tag_name )
 		{
 			$is_invalid = true;
 			$i = 0;
@@ -415,35 +437,29 @@ if(!class_exists('WP_HTML_Parser'))
 				}
 				$i++;
 			}
-			echo '<pre><p>ERROR: Invalid tag "'.$tag_name.'" name used. Only "a", "body", "div", "head", "script", ';
-			echo '"span", "style", "table", "tbody", "tfoot", "thead", "td", "th", and "tr" can be used.</p></pre>';
+			echo '<pre><p>ERROR: Invalid tag "'.$tag_name.'" name used. Only ';
+			for ($i = 0; $i < count($this->valid_HTML_tags); $i++)
+			{
+				echo $this->valid_HTML_tags[$i];
+				while ($i < count($this->valid_HTML_tags) - 1)
+				{
+					echo ', ';
+				}
+			}
+			echo ' can be used.</p></pre>';
 			return true;
 		}
-		// END of invalid_tag_name($tag_name)
-		
-		
-		private function tag_has_class($class_value, $start)
-		{
-			return $this->tag_has_attribute($class_value, "class", $start);
-		}
-		
-		
-		
-		private function tag_has_id($id_value, $start)
-		{
-			return $this->tag_has_attribute($id_value, "id", $start);
-		}
-		
+		// END of invalid_tag_name( $tag_name )
 		
 		
 		/**
-		 * [Description]
+		 * Determines if there is a tag with an attibute name and value or not within $this->website-HTML starting from an offset $start.
 		 *
-		 * @preconditions:  The first element $this->website_HTML[$htmloffset] = '<'.
+		 * @preconditions:  The first element $this->website_HTML[$start] = '<'.
 		 * @return:         [bool] true, if there is a tag attribute with an $attribute_value.
 		 *                  [bool] false, if there is no tag attribute with an $attribute_value.
 		 */
-		private function tag_has_attribute($attribute_value, $attribute_name, $start)
+		private function tag_has_attribute_name_and_value( $attribute_name, $attribute_value, $start )
 		{
 			$end = stripos($this->website_HTML, ">", $start);
 			$length = $end - $start + 1;
@@ -481,6 +497,7 @@ if(!class_exists('WP_HTML_Parser'))
 			}
 			return false;
 		}
+		// END of tag_has_attribute_name_and_value( $attribute_name, $attribute_value, $start )
 	}
 	// END class WP_HTML_Parser	
 }
