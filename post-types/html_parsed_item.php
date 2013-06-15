@@ -26,9 +26,17 @@ if(!class_exists('HTML_Parsed_Item'))
 	{
 		 const POST_TYPE = "HTML Parsed Item";
 		 private $_meta = array(
+		 	'ASIN',
 		 	'amazon_price',
-		 	'seller_new_price',
-		 	'seller_used_price'
+			'amazon_old_price_old',
+			'category_URL',
+			'comments_count',
+			'comments_URL',
+			'product_URL',
+		 	'marketplace_price_new',
+		 	'marketplace_price_used',
+			'rating',
+			'thumbnail_URL'
 		);
 		
 		/**
@@ -87,7 +95,7 @@ if(!class_exists('HTML_Parsed_Item'))
                 return;
             }
             
-    		if($_POST['post_type'] == self::POST_TYPE && current_user_can('edit_post', $post_id))
+    		if(isset($_POST['post_type']) == self::POST_TYPE && current_user_can('edit_post', $post_id))
     		{
     			foreach($this->_meta as $field_name)
     			{
