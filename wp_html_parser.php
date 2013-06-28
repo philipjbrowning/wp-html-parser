@@ -33,9 +33,9 @@ if(!class_exists('WP_HTML_Parser'))
 {
 	class WP_HTML_Parser
 	{	
-		/* ==================================================================================================== *
-		 * SUMMARY OF THE WP_HTML_PARSER CLASS                                                                  *
-		 * ==================================================================================================== *
+		/* ========================================================================================= *
+		 * SUMMARY OF THE WP_HTML_PARSER CLASS                                                       *
+		 * ========================================================================================= *
 		
 			----------------
 			Public Varibales
@@ -51,6 +51,8 @@ if(!class_exists('WP_HTML_Parser'))
 			__construct()
 			activate()
 			deactivate()
+			
+			get_attribute_value_of_tag( $tag_name, $attribute_name, $html_offset=0 )
 			get_HTML_within_tag( $tag_name, $html_offset=0 )
 			get_tag_end_position( $tag_name, $html_offset=0 )
 			get_tag_start_position( $tag_name, $html_offset=0 )
@@ -72,14 +74,24 @@ if(!class_exists('WP_HTML_Parser'))
 			get_the_HTML( $from, $to )
 			get_tag_start_position_from_html( $html_block, $tag_name, $html_offset=0 )
 			get_tag_end_position_from_html( $html_block, $tag_name, $html_offset=0 )
-			invalid_tag_name( $tag_name )
-			tag_has_attribute( $attribute_value, $attribute_name, $start )
+			
+			is_valid_tag_name( $tag_name )
+			
+			tag_has_attribute_name( $attribute_name, $start )
+			tag_has_attribute_name_and_value( $attribute_name, $attribute_value, $start )
 		
 		 * ==================================================================================================== *
 		 * PRIVATE VARIABLE DECLARATIONS                                                                        *
 		 * ==================================================================================================== */
 		
-		private $website_HTML = "";
+		const MIN_TAG_LENGTH = 2;
+		
+		private $options = array(
+			'remove_comments' => true,
+			'remove_header' => true,
+			'remove_script' => true,
+			'remove_style' => true // CSS
+		);
 		
 		private $valid_HTML_tags = array(
 		 	'a',
@@ -98,6 +110,8 @@ if(!class_exists('WP_HTML_Parser'))
 			'title',
 		 	'tr'
 		);
+		
+		private $website_HTML = "";
 		
 		
 		/* ==================================================================================================== *
@@ -141,24 +155,143 @@ if(!class_exists('WP_HTML_Parser'))
 		
 		
 		/**
+		 * [FUNCTION DESCRIPTION]
+		 */
+		public function get_all_HTML()
+		{
+			if($this->HTML_content_is_saved())
+			{
+				return htmlentities($this->website_HTML);
+			}
+			return new WP_Error('no_HTML_content', 'ERROR: The function get_all_HTML() found no saved HTML content.');
+		}
+		
+		
+		/**
+		 * [FUNCTION DESCRIPTION]
+		 */
+		public function get_attribute_value_of_tag( $tag_name, $attribute_name, $html_offset=0 )
+		{
+			if($this->HTML_content_is_saved())
+			{
+				if ($this->is_valid_tag_name($tag_name))
+				{
+					echo "<p>---------------------------------------</p>";
+					echo "<p>get_attribute_value_of_tag START</p>";
+					echo "<p> tag_name: ".$tag_name."</p>";
+					echo "<p> attribute_name: ".$attribute_name."</p>";
+					echo "<p> html_offset: ".$html_offset."</p>";
+					$start_position = $this->get_tag_start_position_from_html($this->website_HTML, $tag_name, $html_offset);
+					if (is_numeric($start_position))
+					{
+						$attribute_start = $this->tag_has_attribute_name( $attribute_name, $html_offset );
+						if (!is_wp_error($attribute_start))
+						{
+							// MORE CODE
+							
+							
+							
+							return $attribute_start;
+						}
+						return $attribute_start; // WP_Error
+					}
+					$error_data = array(
+						"function_name"  => 'get_tag_end_position',
+						"html_offset"    => $html_offset,
+						"start_position" => $start_position,
+						"tag_name"       => $tag_name
+					);
+					return new WP_Error('no_start_position', __('There is no "'.$tag_name.'" tag in the HTML.'), $error_data);	
+					// NEED TO EDIT -------------------------------------------------------------------------------------------------------------- FIX BELOW
+					/*
+					if ($start = $this->get_tag_start_position($tag_name, $html_offset))
+					{
+						if($attribute_start = $this->tag_has_attribute_name( $attribute_name, $html_offset ))
+						{
+							// This tag has an attribute of some name...
+							$quote = "";
+							$quote_start = "";
+							$double_quote_start = stripos($this->website_HTML, '"', $attribute_start); // Plus 1 for the equal's sign or space
+							$single_quote_start = stripos($this->website_HTML, "'", $attribute_start);
+							if(($double_quote_start && !$single_quote_start) || ((int)$double_quote_start > (int)$single_quote_start))
+							{
+								$quote = '"';
+								$quote_start = $double_quote_start;
+							}
+							else
+							{
+								$quote = "'";
+								$quote_start = $single_quote_start;
+							}
+							$quote_end = stripos($opening_tag, $quote, $quote_start+1);
+							$length = $quote_end - $quote_start + 1;
+							$attribute_values = substr($opening_tag, $quote_start, $length);
+							return $attribute_values;
+						}
+						echo '<p><u>ERROR</u>: No attribute with name '.$attribute_name.' found within '.$tag_name.'</p>';
+						return false;
+					}
+					echo '<p><u>ERROR</u>: No tag with name '.$tag_name.' found.</p>';
+					return false;
+					// NEED TO EDIT -------------------------------------------------------------------------------------------------------------- FIX ABOVE
+				*/
+				}
+				$error_data = array(
+					"attribute_name" => $attribute_name,
+					"function_name"  => 'get_attribute_value_of_tag',
+					"html_offset"    => $html_offset,
+					"tag_name"       => $tag_name
+				);
+				return new WP_Error('invalid_tag_name', __('This plugin does not allow the parsing of a "'.$tag_name.'" tag.'), $error_data);
+			}
+			$error_data = array(
+				"function_name"  => 'get_attribute_value_of_tag',
+				"html_offset"    => $html_offset,
+				"tag_name"       => $tag_name
+			);
+			return new WP_Error('no_HTML_content', __('The function get_attribute_value_of_tag() found no saved HTML content.'), $error_data);
+		}
+		
+		/**
 		 * Gets the HTML code pulled from a URL.
 		 *
 		 * @return:  [string] HTML code, if matching start and end tags are found.
 		 *           [bool] false, if the start tag was not found, or a matching end tag was not found.
 		 */
-		public function get_HTML_within_tag($tag_name, $html_offset=0)
+		public function get_HTML_within_tag( $tag_name, $html_offset=0 )
 		{
-			if ($start = $this->get_tag_start_position($tag_name, $html_offset))
+			if($this->HTML_content_is_saved())
 			{
-				if ($end = $this->get_tag_end_position($tag_name, $html_offset))
+				if ($this->is_valid_tag_name($tag_name))
 				{
-					return $this->get_the_HTML($start, $end);
+					// NEED TO EDIT -------------------------------------------------------------------------------------------------------------- FIX BELOW
+					if ($start = $this->get_tag_start_position($tag_name, $html_offset))
+					{
+						if ($end = $this->get_tag_end_position($tag_name, $html_offset))
+						{
+							return $this->get_the_HTML($start, $end);
+						}
+						echo '<p><u>ERROR</u>: The function get_HTML_within_tag() found no end tag.</p>';
+						return false;
+					}
+					echo '<p><u>ERROR</u>: The function get_HTML_within_tag() found no start tag.</p>';
+					return false;
+					// NEED TO EDIT -------------------------------------------------------------------------------------------------------------- FIX ABOVE
+				} else {
+					$error_data = array(
+						"function_name"  => 'get_HTML_within_tag',
+						"html_offset"    => $html_offset,
+						"tag_name"       => $tag_name
+					);
+					return new WP_Error('invalid_tag_name', __('This plugin does not allow the parsing of a "'.$tag_name.'" tag.'), $error_data);
 				}
-				echo '<p><u>ERROR</u>: No end tag found.</p>';
-				return false;
 			}
-			echo '<p><u>ERROR</u>: No start tag found.</p>';
-			return false;
+			$error_data = array(
+				"function_name"  => 'get_HTML_within_tag',
+				"html_offset"    => $html_offset,
+				"tag_name"       => $tag_name
+			);
+			return new WP_Error('no_HTML_content', __('The function get_HTML_within_tag() found no saved HTML content.'), $error_data);
 		}
 		// END of get_HTML_within_tag($tag_name, $offset=0)
 		
@@ -169,13 +302,22 @@ if(!class_exists('WP_HTML_Parser'))
 		 * @return:  [string]
 		 *           [bool] false
 		 */
-		public function get_HTML_content_within_tag($tag_name, $html_offset=0)
+		public function get_HTML_content_within_tag( $tag_name, $html_offset=0 )
 		{
 			$html_block = $this->get_HTML_within_tag($tag_name, $html_offset);
-			$start = stripos($html_block, ">") + 1;
-			$end = strripos($html_block , "</".$tag_name);
-			$length = $end - $start;
-			return substr($html_block, $start, $length);
+			if (is_wp_error($html_block))
+			{
+				return $html_block; // WP_Error Class
+			}
+			else
+			{
+				// NEED TO EDIT ------------------------------------------------------------------------------------------------------------------ FIX BELOW
+				$start = stripos($html_block, ">") + 1;
+				$end = strripos($html_block , "</".$tag_name);
+				$length = $end - $start;
+				return substr($html_block, $start, $length);
+				// NEED TO EDIT ------------------------------------------------------------------------------------------------------------------ FIX ABOVE
+			}
 		}
 		
 		
@@ -185,13 +327,27 @@ if(!class_exists('WP_HTML_Parser'))
 		 * @return:  [int] if the tag exists within $this->website_HTML
 		 *           [bool] false, if the tag does not exist within $this->website_HTML
 		 */
-		public function get_tag_end_position($tag_name, $html_offset=0)
+		public function get_tag_end_position( $tag_name, $html_offset=0 )
 		{
-			if ($this->invalid_tag_name($tag_name))
+			if($this->HTML_content_is_saved())
 			{
-				return false;
+				if ($this->is_valid_tag_name($tag_name))
+				{
+					return $this->get_tag_end_position_from_html($this->website_HTML, $tag_name, $html_offset);
+				}
+				$error_data = array(
+					"function_name"  => 'get_tag_end_position',
+					"html_offset"    => $html_offset,
+					"tag_name"       => $tag_name
+				);
+				return new WP_Error('invalid_tag_name', __('This plugin does not allow the parsing of a "'.$tag_name.'" tag.'), $error_data);
 			}
-			return $this->get_tag_end_position_from_html($this->website_HTML, $tag_name, $html_offset);
+			$error_data = array(
+				"function_name"  => 'get_tag_end_position',
+				"html_offset"    => $html_offset,
+				"tag_name"       => $tag_name
+			);
+			return new WP_Error('no_HTML_content', __('The function get_tag_end_position() found no saved HTML content.'), $error_data);
 		}
 		// END of get_tag_end_position($tag_name, $html_offset=0)
 		
@@ -200,15 +356,41 @@ if(!class_exists('WP_HTML_Parser'))
 		 * Returns the start position of a specific tag in $this->website_HTML.
 		 *
 		 * @return:  [int] if the tag exists within $this->website_HTML
-		 *           [bool] false, if the tag does not exist within $this->website_HTML
+		 *           [WP_Error] no_start_position, if there is no tag found within the HTML code
+		 *           [WP_Error] if the tag name is invalid
 		 */
 		public function get_tag_start_position($tag_name, $html_offset=0)
 		{
-			if ($this->invalid_tag_name($tag_name))
+			if($this->HTML_content_is_saved())
 			{
-				return false;
+				if ($this->is_valid_tag_name($tag_name))
+				{
+					$start_position = $this->get_tag_start_position_from_html($this->website_HTML, $tag_name, $html_offset);
+					if (is_numeric($start_position))
+					{
+						return $start_position;
+					}
+					$error_data = array(
+						"function_name"  => 'get_tag_end_position',
+						"html_offset"    => $html_offset,
+						"start_position" => $start_position,
+						"tag_name"       => $tag_name
+					);
+					return new WP_Error('no_start_position', __('There is no "'.$tag_name.'" tag in the HTML.'), $error_data);	
+				}
+				$error_data = array(
+					"function_name" => 'get_tag_end_position',
+					"html_offset"   => $html_offset,
+					"tag_name"      => $tag_name
+				);
+				return new WP_Error('invalid_tag_name', __('This plugin does not allow the parsing of a "'.$tag_name.'" tag.'), $error_data);
 			}
-			return $this->get_tag_start_position_from_html($this->website_HTML, $tag_name, $html_offset);
+			$error_data = array(
+				"function_name"  => 'get_tag_start_position',
+				"html_offset"    => $html_offset,
+				"tag_name"       => $tag_name
+			);
+			return new WP_Error('no_HTML_content', __('The function get_tag_start_position() found no saved HTML content.'), $error_data);
 		}
 		// END of get_tag_start_position($tag_name, $html_offset=0)
 		
@@ -218,28 +400,50 @@ if(!class_exists('WP_HTML_Parser'))
 		 */
 		public function get_tag_start_position_with_attribute_name_and_value($tag_name, $attribute_name, $attribute_value, $html_offset=0)
 		{
-			$current_offset = $html_offset;
-			do
+			if ($this->is_valid_tag_name($tag_name))
 			{
-				if ($current_position = $this->get_tag_start_position($tag_name, $current_offset))
+				// NEED TO EDIT ------------------------------------------------------------------------------------------------------------------ FIX BELOW
+				$current_offset = $html_offset;
+				do
 				{
-					if($this->tag_has_attribute_name_and_value($attribute_name, $attribute_value, $current_position))
+					if ($current_position = $this->get_tag_start_position($tag_name, $current_offset))
 					{
-						return $current_position;
-					} else {
-						$current_offset = stripos($this->website_HTML, ">", $current_position);
+						if($this->tag_has_attribute_name_and_value($attribute_name, $attribute_value, $current_position))
+						{
+							return $current_position;
+						} else {
+							$current_offset = stripos($this->website_HTML, ">", $current_position);
+						}
 					}
-				}
-				else
-				{
-					return false;
-				}
-			} while ($current_offset < strlen($this->website_HTML));
-			
-			// tag_has_attribute_name_and_value($attribute_value, $attribute_name, $start)
+					else
+					{
+						return false;
+					}
+				} while ($current_offset < strlen($this->website_HTML));
+				// NEED TO EDIT ------------------------------------------------------------------------------------------------------------------ FIX ABOVE
+			} else {
+				$error_data = array(
+					"function_name"  => 'get_tag_end_position',
+					"html_offset"    => $html_offset,
+					"tag_name"       => $tag_name
+				);
+				return new WP_Error('invalid_tag_name', __('This plugin does not allow the parsing of a "'.$tag_name.'" tag.'), $error_data);
+			}
 		}
 		// END of get_tag_start_position_with_attribute_name_and_value($tag_name, $attribute_name, $attribute_value, $html_offset=0)
 		
+		
+		/**
+		 * [DESCRIPTION]
+		 */
+		public function HTML_content_is_saved()
+		{
+			if (strlen($this->website_HTML) > 0)
+			{
+				return true;
+			}
+			return false;
+		}
 		
 		/**
 		 * Prints the HTML code pulled from a URL.
@@ -287,6 +491,7 @@ if(!class_exists('WP_HTML_Parser'))
 		public function save_HTML($new_HTML)
 		{
 			$this->website_HTML = (string)$new_HTML;
+			$this->remove_header_comments_style_and_script_tags();
 		}
 		// END of save_HTML($new_URL)
 		
@@ -300,12 +505,52 @@ if(!class_exists('WP_HTML_Parser'))
 		public function save_HTML_with_URL($new_URL)
 		{
 			if(is_string($new_URL)) {
-				$this->website_HTML = (string)file_get_contents($new_URL);
-				return true;
+				$contents = @file_get_contents($new_URL);
+				if ($contents === false) {
+					return new WP_Error('invalid_URL', 'ERROR: The function save_HTML_with_URL() could not open the URL.');
+				} else {
+					$this->website_HTML = $contents;
+					$this->remove_header_comments_style_and_script_tags();// Return WP_Error???
+					return true;
+				}
 			}
-			return false;
+			return new WP_Error('invalid_URL', 'ERROR: The function save_HTML_with_URL() requries string input for the URL.');
 		}
 		// END of save_HTML_with_URL($new_URL)
+		
+		
+		/**
+		 * [DESCRIPTION]
+		 */
+		public function set_options($remove_comments, $remove_header, $remove_script, $remove_style)
+		{
+			$return_wp_error = false;
+			if (is_bool($remove_comments)) {
+				$this->options['remove_comments'] = $remove_comments;
+			} else {
+				$return_wp_error = true;
+			}
+			if (is_bool($remove_header)) {
+				$this->options['remove_header'] = $remove_header;
+			} else {
+				$return_wp_error = true;
+			}
+			if (is_bool($remove_script)) {
+				$this->options['remove_script'] = $remove_script;
+			} else {
+				$return_wp_error = true;
+			}
+			if (is_bool($remove_style)) {
+				$this->options['remove_style'] = $remove_style;
+			} else {
+				$return_wp_error = true;
+			}
+			if ($return_wp_error) {
+				return new WP_Error('set_options_error', 'ERROR: All options values must be true or false.');
+			}
+			return true;
+		}
+		// END of set_options($remove_comments, $remove_header, $remove_script, $website_URL)
 		
 		
 		/* ==================================================================================================== *
@@ -334,11 +579,114 @@ if(!class_exists('WP_HTML_Parser'))
 		{
 			$length = $to - $from;
 			if ($length > 0) {
-				return substr($this->website_HTML, $from, $length); // ---------- REMOVED htmlentities() -------------------------------------------------
+				return substr($this->website_HTML, $from, $length);
 			}
 			return false;
 		}
 		// END of get_the_HTML($from, $to)
+		
+		
+		/**
+		 * Finds the end position of a tag within an HTML block.
+		 *
+		 * @return:  [int] position of the tag, if the tag exists within $website_HTML
+		 *           [WP_Error] false if the tag does not exist within $website_HTML
+		 *           [WP_Error] if there is no start position
+		 */
+		public function get_tag_end_position_from_html( $html_block, $tag_name, $html_offset=0 )
+		{
+			$start_position = $this->get_tag_start_position_from_html( $html_block, $tag_name, $html_offset );
+			if ($start_position !== false)
+			{
+				$tag_stack_count = 1;
+				while (($tag_stack_count > 0) && ($start_position !== false))
+				{
+					$tag_length = strlen($tag_name);
+					$next_start_position = $this->get_tag_start_position_from_html( $html_block, $tag_name, $start_position + $tag_length );
+					$next_end_position_1 = stripos($html_block, "</".$tag_name.">", $start_position);
+					$next_end_position_2 = $this->get_next_short_close( $html_block, $tag_name, $start_position );
+					$next_end_position = $this->minimum_position($next_end_position_1, $next_end_position_2);
+					$editing_position = $this->minimum_position($next_start_position, $next_end_position);
+					$is_opening_tag = true;
+					if ($editing_position == $next_end_position)
+					{
+						$is_opening_tag = false;
+					}
+					if ($is_opening_tag)
+					{
+						$tag_stack_count++;
+					} else {
+						$tag_stack_count--;
+					}
+					if ($tag_stack_count == 0)
+					{
+						return $editing_position + $tag_length + 3;
+					}
+					$start_position = $editing_position;
+				}
+				$error_data = array(
+					"html_block"      => $html_block,
+					"html_offset"     => $html_offset,
+					"start_position"  => $start_position,
+					"tag_name"        => $tag_name,
+					"tag_stack_count" => $tag_stack_count
+				);
+				return new WP_Error('invalid_html', __('There was no corresponding closing tag for '.$tag_name.' in the html code.'), $error_data);
+			}
+			$error_data = array(
+				"html_block"     => $html_block,      //  Example
+				"html_offset"    => $html_offset,     //  -------
+				"start_position" => $start_position,  //  div id="first">
+				"tag_name"       => $tag_name         //
+			);
+			return new WP_Error('invalid_tag_start', __('There must be an opening '.$tag_name.' tag in the html code.'), $error_data);
+		}
+		// END of get_tag_end_position_from_html( $html_block, $tag_name, $html_offset=0 )
+		
+		
+		/**
+		 * Finds an end tag denoted by "/>".
+		 *
+		 * @return:  [int] position of the tag, if the tag exists within $website_HTML
+		 *           [bool] false, if the tag does not exist within $website_HTML. This mirrors the stripos() function.
+		 */
+		private function get_next_short_close( $html_block, $tag_name, $html_offset=0 )
+		{
+			$possible_end_position = stripos($html_block, "/>", $html_offset);
+			if ($possible_end_position !== false)
+			{
+				$tag_html = substr($html_block, $html_offset, $possible_end_position - $html_offset + 2);
+				$start_tag_position = strripos($tag_html, "<");
+				$tag_html = substr($tag_html, $start_tag_position, $possible_end_position - $start_tag_position + 2);
+				$space_char_position = stripos($tag_html, " ");
+				if (substr($tag_html, 1, $space_char_position - 1) == $tag_name)
+				{
+					return $possible_end_position;
+				}
+				return $this->get_next_short_close( $html_block, $tag_name, $possible_end_position + 2 );
+			}
+			return false;
+		}
+		
+		
+		/**
+		 * Find the minimum value of a character position in a string, accouting for values of false.
+		 *
+		 * @return:  [int] minimum value. If one value = false, while the other has a value, it returns the other's value.
+		 *           [bool] false, if both values are false
+		 */
+		private function minimum_position($a, $b)
+		{
+			if (is_bool($a) && !is_bool($b))
+			{
+				return $b;
+			}
+			elseif  (is_bool($b) && !is_bool($a))
+			{
+				return $a;
+			}
+			return min($a, $b);
+		}
 		
 		
 		/**
@@ -347,117 +695,114 @@ if(!class_exists('WP_HTML_Parser'))
 		 * @return:  [int] position of the tag, if the tag exists within $website_HTML
 		 *           [bool] false, if the tag does not exist within $website_HTML. This mirrors the stripos() function.
 		 */
-		private function get_tag_start_position_from_html( $html_block, $tag_name, $html_offset=0 )
+		public function get_tag_start_position_from_html( $html_block, $tag_name, $html_offset=0 )
 		{
-			if ($this->invalid_tag_name($tag_name))
-			{
-				return false;
-			}
 			return stripos($html_block, "<".$tag_name, $html_offset);
 		}
 		// END of get_tag_start_position_from_html( $html_block, $tag_name, $html_offset=0 )
 		
 		
 		/**
-		 * Finds the end position of a tag within an HTML block.
+		 * Determines if a tag name cannot be used by this class.
 		 *
-		 * @return:  [int] position of the tag, if the tag exists within $website_HTML
-		 *           [bool] false if the tag does not exist within $website_HTML
+		 * @return:  [bool] true, if the tag CAN be used.
+		 *           [bool] false, if the tag CANNOT be used.
 		 */
-		private function get_tag_end_position_from_html( $html_block, $tag_name, $html_offset=0 )
+		private function is_valid_tag_name( $tag_name )
 		{
-			if ($this->invalid_tag_name($tag_name))
-			{
-				return false;
-			}
-			$tag_length = strlen($tag_name);
-			$start_position = $this->get_tag_start_position_from_html($html_block, $tag_name, $html_offset);
-			if ($this->get_tag_start_position_from_html($html_block, $tag_name, $html_offset))
-			{ // If there is a start of the tag...
-				$end_position = stripos($html_block, ">", $start_position);
-				if (is_bool($end_position))
-				{
-					$end_position = strlen($this->website_HTML);
-				}
-				if (substr($html_block, ($end_position - 1), 1) == '/')
-				{// If the previous space contains the character '/'...
-					return $end_position + 1;
-				}
-				else 
-				{// If the previous space does not contain the character '/'...
-					$next_end_position = stripos($html_block, "</".$tag_name.">", $end_position);
-					$next_start_position = stripos($html_block, "<".$tag_name, $start_position + $tag_length);
-					if(!$next_start_position)
-					{
-						return $next_end_position + $tag_length + 3;
-					}
-					// ---------------------------------------------
-					$temp_start_position = $end_position;
-					$temp_end_position = $end_position;
-					$matching_tags = false;
-					while($matching_tags == false)
-					{
-						$next_end_position = stripos($html_block, "</".$tag_name.">", $temp_end_position);						
-						$next_start_position = stripos($html_block, "<".$tag_name, $temp_start_position);
-						
-						if ((int)$next_end_position < (int)$next_start_position) 
-						{// If there are no more start tags...
-							$matching_tags = true;
-							return $next_end_position + $tag_length + 3;
-						} else {
-							$temp_end_position = $next_end_position + $tag_length + 3;
-							$temp_start_position = $next_start_position + $tag_length + 2;
-						}
-					}
-				}
-				echo '<pre><p>ERROR: No end tag for "'.$tag_name.'" was found in this code.</p></pre>';
-				return false;
-			}
-			echo '<pre><p>ERROR: The tag "'.$tag_name.'" does not exist in this code.</p></pre>';
-			return false;
-		}
-		// END of get_tag_end_position_from_html( $html_block, $tag_name, $html_offset=0 )
-		
-		
-		/**
-		 * Determines if a tag name cannot be used by this class
-		 *
-		 * @return:  [bool] true, if the tag CANNOT be used.
-		 *           [bool] false, if the tag CAN be used.
-		 */
-		private function invalid_tag_name( $tag_name )
-		{
-			$is_invalid = true;
+			$is_valid = false;
 			$i = 0;
 			while ($i < count($this->valid_HTML_tags))
 			{
 				if ($tag_name == $this->valid_HTML_tags[$i])
 				{
-					return false;
+					return true;
 				}
 				$i++;
 			}
-			echo '<pre><p>ERROR: Invalid tag "'.$tag_name.'" name used. Only ';
-			for ($i = 0; $i < count($this->valid_HTML_tags); $i++)
-			{
-				echo $this->valid_HTML_tags[$i];
-				while ($i < count($this->valid_HTML_tags) - 1)
-				{
-					echo ', ';
-				}
-			}
-			echo ' can be used.</p></pre>';
-			return true;
+			return false;
 		}
-		// END of invalid_tag_name( $tag_name )
+		// END of is_valid_tag_name( $tag_name )
+		
+		
+		/**
+		 *
+		 */
+		public function remove_all_tags( $tag_name, $tag_end_name=false )
+		{
+			
+		}
+		
+		/**
+		 * [DESCRIPTION]
+		 */
+		public function remove_header_comments_style_and_script_tags()
+		{
+			if ($this->options['remove_header'] === true)
+			{
+				// Crop all HTML outside the body tags
+				$body_start = $this->get_tag_start_position( "body" );
+				$body_end = $this->get_tag_end_position( "body" );
+				$body_start = stripos($this->website_HTML, ">", $body_start) + 1;
+				$this->website_HTML = $this->get_the_HTML($body_start, strlen($this->website_HTML));
+				$this->website_HTML = $this->get_the_HTML(0, $body_end);
+			}
+			if ($this->options['remove_comments'] === true)
+			{
+				$this->remove_all_tags('<!--', '-->'); 
+			}
+			if ($this->options['remove_script'] === true)
+			{
+				$this->remove_all_tags('script');
+			}
+			if ($this->options['remove_style'] === true)
+			{
+				$this->remove_all_tags('style');
+			}
+		}
+		// END of remove_header_comments_style_and_script_tags()
+		
+		
+		/**
+		 * Determines if there is a tag with an attibute within $this->website-HTML starting from an offset $tag_start.
+		 *
+		 * @preconditions:  The first element $this->website_HTML[$tag_start] = '<'.
+		 * @return:         [int] position, if there is a tag $attribute_name.
+		 *                  [bool] false, if there is no tag $attribute_name.
+		 *                  [WP_Error], if there are no start and or ending tag characters
+		 */
+		public function tag_has_attribute_name( $attribute_name, $tag_start )
+		{
+			if($this->website_HTML[$tag_start] == '<')
+			{
+				$tag_end = stripos($this->website_HTML, ">", $tag_start);
+				if ($tag_end !== false)
+				{
+					$opening_tag = substr($this->website_HTML, $tag_start, $tag_end - $tag_start + 1);
+					return stripos($opening_tag, $attribute_name);
+				}
+				$error_data = array(
+					"attribute_name" => $attribute_name,
+					"tag_end"        => $tag_end,
+					"tag_start"      => $tag_start
+				);
+				return new WP_Error('invalid_tag_end', __('There is no ending tag character ">" after the start tag character "<" was found.'), $error_data);
+			}
+			$error_data = array(
+					"attribute_name" => $attribute_name,
+					"tag_start"      => $tag_start
+				);
+			return new WP_Error('invalid_tag_start', __('The first element must be "<".'), $error_data);
+		}
+		// END of tag_has_attribute_name( $attribute_name, $tag_start )
 		
 		
 		/**
 		 * Determines if there is a tag with an attibute name and value or not within $this->website-HTML starting from an offset $start.
 		 *
 		 * @preconditions:  The first element $this->website_HTML[$start] = '<'.
-		 * @return:         [bool] true, if there is a tag attribute with an $attribute_value.
-		 *                  [bool] false, if there is no tag attribute with an $attribute_value.
+		 * @return:         [bool] true, if there is a tag $attribute_name with $attribute_value.
+		 *                  [bool] false, if there is no tag $attribute_name with $attribute_value.
 		 */
 		private function tag_has_attribute_name_and_value( $attribute_name, $attribute_value, $start )
 		{

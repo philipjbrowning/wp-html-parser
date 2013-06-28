@@ -76,12 +76,25 @@ if(!class_exists('HTML_Parsed_Item'))
     				'has_archive' => true,
     				'description' => __("This is a sample post type meant only to illustrate a preferred structure of plugin development"),
     				'supports' => array(
-    					'title', 'editor', 'excerpt', 
+    					'title', 'editor', 'excerpt', 'thumbnail'  
     				),
     			)
     		);
 		} // END of create_HTML_Parsed_Item()
-		
+
+/*
+'menu_name' - the menu name text. This string is the name to give menu items. Defaults to value of name
+'all_items' - the all items text used in the menu. Default is the Name label
+'add_new' - the add new text. The default is Add New for both hierarchical and non-hierarchical types. When internationalizing this string, please use a gettext context matching your post type. Example: _x('Add New', 'product');
+'add_new_item' - the add new item text. Default is Add New Post/Add New Page
+'edit_item' - the edit item text. Default is Edit Post/Edit Page
+'new_item' - the new item text. Default is New Post/New Page
+'view_item' - the view item text. Default is View Post/View Page
+'search_items' - the search items text. Default is Search Posts/Search Pages
+'not_found' - the not found text. Default is No posts found/No pages found
+'not_found_in_trash' - the not found in trash text. Default is No posts found in Trash/No pages found in Trash
+'parent_item_colon' - the parent text. This string isn't used on non-hierarchical types. In hierarchical ones the default is Parent Page
+*/
 		
 		/**
     	 * Save the metaboxes for this custom post type
