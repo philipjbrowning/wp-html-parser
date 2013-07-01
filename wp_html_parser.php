@@ -569,6 +569,32 @@ if(!class_exists('WP_HTML_Parser'))
 		// END of boolString( $bValue = false )
 		
 		
+		
+		/**
+		 * Finds an end tag denoted by "/>".
+		 *
+		 * @return:  [int] position of the tag, if the tag exists within $website_HTML
+		 *           [bool] false, if the tag does not exist within $website_HTML. This mirrors the stripos() function.
+		 */
+		private function get_next_short_close( $html_block, $tag_name, $html_offset=0 )
+		{
+			$possible_end_position = stripos($html_block, "/>", $html_offset);
+			if ($possible_end_position !== false)
+			{
+				$tag_html = substr($html_block, $html_offset, $possible_end_position - $html_offset + 2);
+				$start_tag_position = strripos($tag_html, "<");
+				$tag_html = substr($tag_html, $start_tag_position, $possible_end_position - $start_tag_position + 2);
+				$space_char_position = stripos($tag_html, " ");
+				if (substr($tag_html, 1, $space_char_position - 1) == $tag_name)
+				{
+					return $possible_end_position;
+				}
+				return $this->get_next_short_close( $html_block, $tag_name, $possible_end_position + 2 );
+			}
+			return false;
+		}
+		
+		
 		/**
 		 * Returns a subset of the HTML code saved between two index values.
 		 * 
@@ -645,51 +671,6 @@ if(!class_exists('WP_HTML_Parser'))
 		
 		
 		/**
-		 * Finds an end tag denoted by "/>".
-		 *
-		 * @return:  [int] position of the tag, if the tag exists within $website_HTML
-		 *           [bool] false, if the tag does not exist within $website_HTML. This mirrors the stripos() function.
-		 */
-		private function get_next_short_close( $html_block, $tag_name, $html_offset=0 )
-		{
-			$possible_end_position = stripos($html_block, "/>", $html_offset);
-			if ($possible_end_position !== false)
-			{
-				$tag_html = substr($html_block, $html_offset, $possible_end_position - $html_offset + 2);
-				$start_tag_position = strripos($tag_html, "<");
-				$tag_html = substr($tag_html, $start_tag_position, $possible_end_position - $start_tag_position + 2);
-				$space_char_position = stripos($tag_html, " ");
-				if (substr($tag_html, 1, $space_char_position - 1) == $tag_name)
-				{
-					return $possible_end_position;
-				}
-				return $this->get_next_short_close( $html_block, $tag_name, $possible_end_position + 2 );
-			}
-			return false;
-		}
-		
-		
-		/**
-		 * Find the minimum value of a character position in a string, accouting for values of false.
-		 *
-		 * @return:  [int] minimum value. If one value = false, while the other has a value, it returns the other's value.
-		 *           [bool] false, if both values are false
-		 */
-		private function minimum_position($a, $b)
-		{
-			if (is_bool($a) && !is_bool($b))
-			{
-				return $b;
-			}
-			elseif  (is_bool($b) && !is_bool($a))
-			{
-				return $a;
-			}
-			return min($a, $b);
-		}
-		
-		
-		/**
 		 * Finds the first occurnace of a tag within an HTML block.
 		 *
 		 * @return:  [int] position of the tag, if the tag exists within $website_HTML
@@ -726,11 +707,61 @@ if(!class_exists('WP_HTML_Parser'))
 		
 		
 		/**
+		 * Find the minimum value of a character position in a string, accouting for values of false.
+		 *
+		 * @return:  [int] minimum value. If one value = false, while the other has a value, it returns the other's value.
+		 *           [bool] false, if both values are false
+		 */
+		private function minimum_position($a, $b)
+		{
+			if (is_bool($a) && !is_bool($b))
+			{
+				return $b;
+			}
+			elseif  (is_bool($b) && !is_bool($a))
+			{
+				return $a;
+			}
+			return min($a, $b);
+		}
+		
+		
+		/**
 		 *
 		 */
-		public function remove_all_tags( $tag_name, $tag_end_name=false )
+		private function remove_all_comments()
 		{
-			
+			do
+			{
+				$tag_start = $this->get_tag_start_position_from_html( $this->website_HTML, "!--" );
+				if ($tag_start !== false)
+				{
+					$tag_end = stripos($this->website_HTML, "-->", $tag_start);
+					if ($tag_end !== false)
+					{
+						$this->website_HTML = $this->str_remove( $tag_start, $tag_end + 3);
+					}
+				}
+			} while ($tag_start !== false && $tag_end !== false);
+		}
+		
+		/**
+		 *
+		 */
+		public function remove_all_tags( $tag_name )
+		{
+			do
+			{
+				$tag_start = $this->get_tag_start_position_from_html( $this->website_HTML, $tag_name );
+				if ($tag_start !== false)
+				{
+					$tag_end = $this->get_tag_end_position_from_html( $this->website_HTML, $tag_name );
+					if ($tag_end !== false)
+					{
+						$this->website_HTML = $this->str_remove( $tag_start, $tag_end );
+					}
+				}
+			} while ($tag_start !== false && $tag_end !== false);
 		}
 		
 		/**
@@ -744,12 +775,11 @@ if(!class_exists('WP_HTML_Parser'))
 				$body_start = $this->get_tag_start_position( "body" );
 				$body_end = $this->get_tag_end_position( "body" );
 				$body_start = stripos($this->website_HTML, ">", $body_start) + 1;
-				$this->website_HTML = $this->get_the_HTML($body_start, strlen($this->website_HTML));
-				$this->website_HTML = $this->get_the_HTML(0, $body_end);
+				$this->website_HTML = $this->get_the_HTML($body_start, $body_end - 7);
 			}
 			if ($this->options['remove_comments'] === true)
 			{
-				$this->remove_all_tags('<!--', '-->'); 
+				$this->remove_all_comments(); 
 			}
 			if ($this->options['remove_script'] === true)
 			{
@@ -761,6 +791,18 @@ if(!class_exists('WP_HTML_Parser'))
 			}
 		}
 		// END of remove_header_comments_style_and_script_tags()
+		
+		
+		private function str_remove( $from, $to )
+		{
+			$text_before = "";
+			if ($from > 0 )
+			{
+				$text_before = substr($this->website_HTML, 0, $from);
+			}
+			$text_after = substr($this->website_HTML, $to, strlen($this->website_HTML) - $to);
+			return $text_before . $text_after;
+		}
 		
 		
 		/**
