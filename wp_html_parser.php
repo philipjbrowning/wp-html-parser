@@ -170,6 +170,38 @@ if(!class_exists('WP_HTML_Parser'))
 		/**
 		 * [FUNCTION DESCRIPTION]
 		 */
+		public function get_all_tag_names()
+		{
+			$offset = 0;
+			echo "<pre>";
+			$count = 0;
+			do
+			{
+				$tag_start = stripos($this->website_HTML, '<', $offset);
+				if (($this->website_HTML[$tag_start + 1] !== '/') && ($tag_start !== false))
+				{
+					echo "<p>tag_start = $tag_start</p>";
+					$tag_ending_space = stripos($this->website_HTML, ' ', $tag_start);
+					echo "<p>tag_ending_space = $tag_ending_space</p>";
+					$tag_ending_gt = stripos($this->website_HTML, '>', $tag_start);
+					echo "<p>tag_ending_gt = $tag_ending_gt</p>";
+					$tag_ending_slash = stripos($this->website_HTML, '/', $tag_start);
+					echo "<p>tag_ending_slash = $tag_ending_slash</p>";
+					$tag_ending = $this->minimum_position($tag_ending_space, $tag_ending_gt);
+					$tag_ending = $this->minimum_position($tag_ending, $tag_ending_slash);
+					echo "<p>tag_ending = $tag_ending</p>";
+					$tag_name = substr($this->website_HTML, $tag_start + 1, $tag_ending - $tag_start); // LOGIC ERROR HERE WITH ">" and "/" --------------
+					echo "<p>tag_name = $tag_name</p>";
+				}
+				$offset = $tag_start + 1;
+			} while ($count++ < 5); // ($tag_start !== false);
+			echo "</pre>";
+		}
+		
+		
+		/**
+		 * [FUNCTION DESCRIPTION]
+		 */
 		public function get_attribute_value_of_tag( $tag_name, $attribute_name, $html_offset=0 )
 		{
 			if($this->HTML_content_is_saved())
@@ -727,7 +759,7 @@ if(!class_exists('WP_HTML_Parser'))
 		
 		
 		/**
-		 *
+		 * [DESCRIPTION]
 		 */
 		private function remove_all_comments()
 		{
@@ -746,7 +778,7 @@ if(!class_exists('WP_HTML_Parser'))
 		}
 		
 		/**
-		 *
+		 * [DESCRIPTION]
 		 */
 		public function remove_all_tags( $tag_name )
 		{
@@ -793,6 +825,9 @@ if(!class_exists('WP_HTML_Parser'))
 		// END of remove_header_comments_style_and_script_tags()
 		
 		
+		/**
+		 * [DESCRIPTION]
+		 */
 		private function str_remove( $from, $to )
 		{
 			$text_before = "";
