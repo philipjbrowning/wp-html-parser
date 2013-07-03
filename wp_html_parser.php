@@ -169,33 +169,32 @@ if(!class_exists('WP_HTML_Parser'))
 		
 		/**
 		 * [FUNCTION DESCRIPTION]
+		 *
+		 * @return:  [array] tag names, if tag names are found.
 		 */
 		public function get_all_tag_names()
 		{
 			$offset = 0;
-			echo "<pre>";
 			$count = 0;
+			$tag_names = array();
 			do
 			{
 				$tag_start = stripos($this->website_HTML, '<', $offset);
 				if (($this->website_HTML[$tag_start + 1] !== '/') && ($tag_start !== false))
 				{
-					echo "<p>tag_start = $tag_start</p>";
 					$tag_ending_space = stripos($this->website_HTML, ' ', $tag_start);
-					echo "<p>tag_ending_space = $tag_ending_space</p>";
 					$tag_ending_gt = stripos($this->website_HTML, '>', $tag_start);
-					echo "<p>tag_ending_gt = $tag_ending_gt</p>";
 					$tag_ending_slash = stripos($this->website_HTML, '/', $tag_start);
-					echo "<p>tag_ending_slash = $tag_ending_slash</p>";
 					$tag_ending = $this->minimum_position($tag_ending_space, $tag_ending_gt);
 					$tag_ending = $this->minimum_position($tag_ending, $tag_ending_slash);
-					echo "<p>tag_ending = $tag_ending</p>";
-					$tag_name = substr($this->website_HTML, $tag_start + 1, $tag_ending - $tag_start); // LOGIC ERROR HERE WITH ">" and "/" --------------
-					echo "<p>tag_name = $tag_name</p>";
+					$tag_name = substr($this->website_HTML, $tag_start + 1, $tag_ending - $tag_start - 1);
+					array_push($tag_names, trim($tag_name));
 				}
 				$offset = $tag_start + 1;
-			} while ($count++ < 5); // ($tag_start !== false);
-			echo "</pre>";
+			} while ($tag_start !== false);
+			$tag_names = array_unique($tag_names);
+			asort(&$tag_names);
+			return $tag_names;
 		}
 		
 		
