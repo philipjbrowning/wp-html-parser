@@ -93,6 +93,8 @@ if(!class_exists('WP_HTML_Parser'))
 			'remove_style' => true // CSS
 		);
 		
+		private $url_variables = false; // Array of $_GET variable names and values;
+		
 		private $valid_HTML_tags = array(
 		 	'a',
 		 	'body',
@@ -169,14 +171,22 @@ if(!class_exists('WP_HTML_Parser'))
 		
 		/**
 		 * [FUNCTION DESCRIPTION]
-		 *
-		 * @return:  [array] tag names, if tag names are found.
+		 * @parameters: [string] tag_name
+		 * @return:
 		 */
-		public function get_all_tag_names()
+		public function get_all_attributes_within_tag( $tag_name )
 		{
-			$offset = 0;
-			$count = 0;
-			$tag_names = array();
+			
+		}
+		
+		
+		/**
+		 * [FUNCTION DESCRIPTION]
+		 * @parameters: [array] tag_names
+		 * @return:
+		 */
+		public function get_next_tag_name( $offset=0 )
+		{
 			do
 			{
 				$tag_start = stripos($this->website_HTML, '<', $offset);
@@ -185,16 +195,45 @@ if(!class_exists('WP_HTML_Parser'))
 					$tag_ending_space = stripos($this->website_HTML, ' ', $tag_start);
 					$tag_ending_gt = stripos($this->website_HTML, '>', $tag_start);
 					$tag_ending_slash = stripos($this->website_HTML, '/', $tag_start);
-					$tag_ending = $this->minimum_position($tag_ending_space, $tag_ending_gt);
-					$tag_ending = $this->minimum_position($tag_ending, $tag_ending_slash);
-					$tag_name = substr($this->website_HTML, $tag_start + 1, $tag_ending - $tag_start - 1);
-					array_push($tag_names, trim($tag_name));
+					$tag_ending = $this->minimum_position(array($tag_ending_space, $tag_ending_gt, $tag_ending_slash));
+					$tag_name = trim(substr($this->website_HTML, $tag_start + 1, $tag_ending - $tag_start - 1));
+					return array("position" => $tag_start, "name" => $tag_name);
 				}
 				$offset = $tag_start + 1;
 			} while ($tag_start !== false);
-			$tag_names = array_unique($tag_names);
-			asort(&$tag_names);
-			return $tag_names;
+			return false; // No tag name found.
+		}
+		
+		
+		/**
+		 * [FUNCTION DESCRIPTION]
+		 *
+		 * @return:  [array] tag names, if tag names are found.
+		 *           [bool] false, if no tag names are found.
+		 */
+		public function get_all_tag_names()
+		{
+			$offset = 0;
+			$tag_name_found = false;
+			$tag_names = array();
+			do
+			{
+				$tag_info = $this->get_next_tag_name($offset);
+				if ($tag_info !== false)
+				{
+					$tag_name_found = true;
+					array_push($tag_names, $tag_info['name']);
+					$offset = $tag_info['position'] + 1;
+				}
+			} while ($tag_info !== false);
+			if ($tag_name_found === true)
+			{
+				$tag_names = array_unique($tag_names);
+				asort(&$tag_names);
+				return $tag_names;
+			} else {
+				return false;
+			}
 		}
 		
 		
@@ -466,6 +505,16 @@ if(!class_exists('WP_HTML_Parser'))
 		
 		/**
 		 * [DESCRIPTION]
+		 * @return:  [array]
+		 *           [bool] false,
+		 */
+		public function get_url_variables()
+		{
+			return $this->url_variables;
+		}
+		
+		/**
+		 * [DESCRIPTION]
 		 */
 		public function HTML_content_is_saved()
 		{
@@ -536,6 +585,7 @@ if(!class_exists('WP_HTML_Parser'))
 		public function save_HTML_with_URL($new_URL)
 		{
 			if(is_string($new_URL)) {
+				$this->set_url_variables($new_URL);
 				$contents = @file_get_contents($new_URL);
 				if ($contents === false) {
 					return new WP_Error('invalid_URL', 'ERROR: The function save_HTML_with_URL() could not open the URL.');
@@ -549,6 +599,38 @@ if(!class_exists('WP_HTML_Parser'))
 		}
 		// END of save_HTML_with_URL($new_URL)
 		
+		
+		/**
+		 * [DESCRIPTION]
+		 */
+		private function set_url_variables( $new_URL )
+		{
+			$var_start = stripos($this->website_URL, '?');
+			if ($var_start !== false)
+			{
+				$website_URL_vars = substr($website_URL, $var_start + 1);
+				do
+				{
+					$equal_char = stripos($website_URL_vars, '=');
+					if ($equal_char !== false)
+					{
+						$var_name = substr($website_URL_vars, 0, $equal_char);
+						$website_URL_vars = substr($website_URL_vars, $equal_char + 1);
+						$ampersand_char = stripos($website_URL_vars, '&');
+						if ($ampersand_char !== false)
+						{
+							$var_value = substr($website_URL_vars, 0, $ampersand_char);
+							$website_URL_vars = substr($website_URL_vars, $ampersand_char + 1);
+							// $URL_variables[$var_name] = rawurldecode($var_value);
+							
+						} elseif (strlen($website_URL_vars) > 0) {
+							// Last variable
+							// $URL_variables[$var_name] = rawurldecode($website_URL_vars);
+						}
+					}
+				} while ($equal_char !== false && $ampersand_char !== false);
+			}
+		}
 		
 		/**
 		 * [DESCRIPTION]
@@ -662,8 +744,8 @@ if(!class_exists('WP_HTML_Parser'))
 					$next_start_position = $this->get_tag_start_position_from_html( $html_block, $tag_name, $start_position + $tag_length );
 					$next_end_position_1 = stripos($html_block, "</".$tag_name.">", $start_position);
 					$next_end_position_2 = $this->get_next_short_close( $html_block, $tag_name, $start_position );
-					$next_end_position = $this->minimum_position($next_end_position_1, $next_end_position_2);
-					$editing_position = $this->minimum_position($next_start_position, $next_end_position);
+					$next_end_position = $this->minimum_position(array($next_end_position_1, $next_end_position_2));
+					$editing_position = $this->minimum_position(array($next_start_position, $next_end_position));
 					$is_opening_tag = true;
 					if ($editing_position == $next_end_position)
 					{
@@ -740,21 +822,45 @@ if(!class_exists('WP_HTML_Parser'))
 		/**
 		 * Find the minimum value of a character position in a string, accouting for values of false.
 		 *
-		 * @return:  [int] minimum value. If one value = false, while the other has a value, it returns the other's value.
-		 *           [bool] false, if both values are false
+		 * @parameters: [int array]
+		 * @return:     [int] minimum value. If one value = false, while the other has a value, it returns the other's value.
+		 *              [bool] false, if both values are false
 		 */
-		private function minimum_position($a, $b)
+		private function minimum_position( $positions )
 		{
-			if (is_bool($a) && !is_bool($b))
+			$num_positions = count($positions);
+			if (is_array($positions) && $num_positions > 1)
 			{
-				return $b;
-			}
-			elseif  (is_bool($b) && !is_bool($a))
+				$i = 0;
+				$min_value = $positions[$i];
+				while ($i < $num_positions)
+				{
+					if (is_bool($min_value) && !is_bool($positions[$i]))
+					{
+						$min_value = $positions[$i];
+					}
+					elseif (!is_bool($min_value) && !is_bool($positions[$i]))
+					{
+						$min_value = min($min_value, $positions[$i]);
+					}
+					$i++;
+				}
+				return $min_value;
+			} 
+			elseif (is_array($positions) && $num_positions == 1)
 			{
-				return $a;
+				return $position[0];
 			}
-			return min($a, $b);
+			elseif (is_numeric($positions) && $positions >= 0)
+			{
+				return $position;
+			}
+			else
+			{
+				return false;
+			}
 		}
+		// END of minimum_position( $positions )
 		
 		
 		/**
