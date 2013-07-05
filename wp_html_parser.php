@@ -33,54 +33,7 @@ if(!class_exists('WP_HTML_Parser'))
 {
 	class WP_HTML_Parser
 	{	
-		/* ========================================================================================= *
-		 * SUMMARY OF THE WP_HTML_PARSER CLASS                                                       *
-		 * ========================================================================================= *
-		
-			----------------
-			Private Varibales
-			----------------
-			
-			(string) website_HTML;
-			(array) valid_HTML_tags;
-			
-			----------------
-			Public Functions
-			----------------
-			
-			__construct()
-			activate()
-			deactivate()
-			
-			get_attribute_value_of_tag( $tag_name, $attribute_name, $html_offset=0 )
-			get_HTML_within_tag( $tag_name, $html_offset=0 )
-			get_tag_end_position( $tag_name, $html_offset=0 )
-			get_tag_start_position( $tag_name, $html_offset=0 )
-			get_tag_start_position_with_attribute_name_and_value( $tag_name, $attribute_name, $attribute_value, $html_offset=0 )
-			
-			print_all_HTML()
-			print_HTML_within_tag( $tag_name, $offset=0)
-			print_HTML_content_within_tag( $tag_name, $offset=0 )
-			print_the_HTML( $from, $to )
-			
-			save_HTML( $new_HTML )
-			save_HTML_with_URL( $new_URL )
-			
-			-----------------
-			Private Functions
-			-----------------
-			
-			boolString( $bValue = false ) {
-			get_the_HTML( $from, $to )
-			get_tag_start_position_from_html( $html_block, $tag_name, $html_offset=0 )
-			get_tag_end_position_from_html( $html_block, $tag_name, $html_offset=0 )
-			
-			is_valid_tag_name( $tag_name )
-			
-			tag_has_attribute_name( $attribute_name, $start )
-			tag_has_attribute_name_and_value( $attribute_name, $attribute_value, $start )
-		
-		 * ==================================================================================================== *
+		/* ==================================================================================================== *
 		 * PRIVATE VARIABLE DECLARATIONS                                                                        *
 		 * ==================================================================================================== */
 		
@@ -173,13 +126,14 @@ if(!class_exists('WP_HTML_Parser'))
 		
 		
 		/**
-		 * [FUNCTION DESCRIPTION]
-		 * @parameters: [string] tag_name
-		 * @return:
+		 * Returns an array of the distinct attributes in a tag sorted alphabetically.
+		 *
+		 * @parameters:  [string] The name of the tag
+		 * @return:      [???]
 		 */
 		public function get_all_attributes_within_tag( $tag_name )
 		{
-			
+			// CODING NOW ----
 		}
 		
 		
@@ -213,6 +167,7 @@ if(!class_exists('WP_HTML_Parser'))
 				return false;
 			}
 		}
+		// END of get_all_tag_names()
 		
 		
 		/**
@@ -411,7 +366,8 @@ if(!class_exists('WP_HTML_Parser'))
 					$tag_ending_space = stripos($this->website_HTML, ' ', $tag_start);
 					$tag_ending_gt = stripos($this->website_HTML, '>', $tag_start);
 					$tag_ending_slash = stripos($this->website_HTML, '/', $tag_start);
-					$tag_ending = $this->minimum_position(array($tag_ending_space, $tag_ending_gt, $tag_ending_slash));
+					$tag_ending_newline = stripos($this->website_HTML, "\n", $tag_start);
+					$tag_ending = $this->minimum_position(array($tag_ending_space, $tag_ending_gt, $tag_ending_slash, $tag_ending_newline));
 					$tag_name = trim(substr($this->website_HTML, $tag_start + 1, $tag_ending - $tag_start - 1));
 					return array("position" => $tag_start, "name" => $tag_name);
 				}
@@ -419,6 +375,7 @@ if(!class_exists('WP_HTML_Parser'))
 			} while ($tag_start !== false);
 			return false; // No tag name found.
 		}
+		// END of get_next_tag_name( $offset=0 )
 		
 		
 		/**
