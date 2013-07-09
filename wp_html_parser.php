@@ -9,8 +9,8 @@
  * Description:  A WordPress plugin that enables users to parse any website and display products on this website, knowing a little HTML code.
  * Version:      1.0
  * Author:       Philip Browning
- * Last Update:  June 5, 2013
- * URI:          http://www.scs.howard.edu
+ * Last Update:  July 8, 2013
+ * Author URI:   https://github.com/philipjbrowning
  * References:   http://www.yaconiello.com/blog/how-to-write-wordpress-plugin/#sthash.lZDxqDtZ.dpbs
  * License:      GPL2
  */
@@ -32,7 +32,10 @@
 if(!class_exists('WP_HTML_Parser'))
 {
 	class WP_HTML_Parser
-	{	
+	{
+		// Include JQuery scripts for form submission
+		
+		
 		/* ==================================================================================================== *
 		 * PRIVATE VARIABLE DECLARATIONS                                                                        *
 		 * ==================================================================================================== */
@@ -82,12 +85,12 @@ if(!class_exists('WP_HTML_Parser'))
 		public function __construct()
 		{
 			// Initialize Settings
-            require_once(sprintf("%s/settings.php", dirname(__FILE__)));
-            $WP_HTML_Parser_Settings = new WP_HTML_Parser_Settings();
+			require_once(sprintf("%s/settings.php", dirname(__FILE__)));
+			$WP_HTML_Parser_Settings = new WP_HTML_Parser_Settings();
 			
 			// Register custom post types
-            require_once(sprintf("%s/post-types/html_parsed_item.php", dirname(__FILE__)));
-            $HTML_Parsed_Item = new HTML_Parsed_Item();
+			require_once(sprintf("%s/post-types/html_parsed_item.php", dirname(__FILE__)));
+			$HTML_Parsed_Item = new HTML_Parsed_Item();
 		}
 		// END of __construct()
 		
@@ -902,9 +905,38 @@ if(!class_exists('WP_HTML_Parser'))
 		/**
 		 * [DESCRIPTION]
 		 */
-		public function set_options($remove_comments, $remove_header, $remove_script, $remove_style, $remove_whitespace)
+		public function set_options( $options )
 		{
 			$return_wp_error = false;
+			if (is_bool($options['remove_comments'])) {
+				$this->options['remove_comments'] = $options['remove_comments'];
+			} else {
+				$return_wp_error = true;
+			}
+			if (is_bool($options['remove_header'])) {
+				$this->options['remove_header'] = $options['remove_header'];
+			} else {
+				$return_wp_error = true;
+			}
+			if (is_bool($options['remove_script'])) {
+				$this->options['remove_script'] = $options['remove_script'];
+			} else {
+				$return_wp_error = true;
+			}
+			if (is_bool($options['remove_style'])) {
+				$this->options['remove_style'] = $options['remove_style'];
+			} else {
+				$return_wp_error = true;
+			}
+			if (is_bool($options['remove_whitespace'])) {
+				$this->options['remove_whitespace'] = $options['remove_whitespace'];
+			} else {
+				$return_wp_error = true;
+			}
+			if ($return_wp_error) {
+				return new WP_Error('set_options_error', 'ERROR: All options values must be true or false.');
+			}
+			/*
 			if (is_bool($remove_comments)) {
 				$this->options['remove_comments'] = $remove_comments;
 			} else {
@@ -933,6 +965,7 @@ if(!class_exists('WP_HTML_Parser'))
 			if ($return_wp_error) {
 				return new WP_Error('set_options_error', 'ERROR: All options values must be true or false.');
 			}
+			*/
 			return true;
 		}
 		// END of set_options($remove_comments, $remove_header, $remove_script, $website_URL)
@@ -1057,9 +1090,24 @@ if(class_exists('WP_HTML_Parser'))
             array_unshift($links, $settings_link); 
             return $links; 
         }
-
-        $plugin = plugin_basename(__FILE__); 
+		$plugin = plugin_basename(__FILE__); 
         add_filter("plugin_action_links_$plugin", 'wp_html_parser_settings_link');
+		
+		// Add JQuery functionality for AJAX
+		function add_wp_html_parser_scripts() {
+			// Use JQuery already in WordPress
+			wp_enqueue_script( 'jquery' );
+			
+			// Register scripts
+			wp_register_script( 'wp-html-parser-js', plugins_url( '/js/jquery.js' , __FILE__ ), array( 'jquery' ), '', true); 
+			
+			// Enqueue scripts
+			wp_enqueue_script( 'wp-html-parser-js' );
+		}
+		add_action( 'wp_enqueue_scripts', 'add_wp_html_parser_scripts' );
+		
+		// Include Helper PHP Functions
+		include_once('ajax-php-scripts/get-variables-function.php');
     }
 }
 // END of if(class_exists('WP_HTML_Parser'))
