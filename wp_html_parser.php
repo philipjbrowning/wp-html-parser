@@ -43,11 +43,17 @@ if(!class_exists('WP_HTML_Parser'))
 		const MIN_TAG_LENGTH = 2;
 		
 		private $options = array(
+			'container_tag_name' => '',
+			'container_attribute_name' => '',
+			'container_attribute_value' => '',
+			'item_tag_name' => '',
+			'item_attribute_name' => '',
+			'item_attribute_value' => '',
 			'remove_comments' => true,
 			'remove_header' => true,
 			'remove_script' => true,
 			'remove_style' => true, // CSS
-			'remove_whitespace' => true
+			'remove_whitespace' => true,
 		);
 		
 		private $url_variables = false; // Array of $_GET variable names and values;
@@ -100,7 +106,31 @@ if(!class_exists('WP_HTML_Parser'))
 		 */
 		public static function activate()
 		{
-			// Do nothing
+			$query = "CREATE TABLE ".$wpdb->prefix."searches (
+				ID bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+				search_author bigint(20) unsigned NOT NULL DEFAULT '0',
+				search_date datetime NOT NULL,
+				search_date_gmt datetime NOT NULL,
+				search_title text NOT NULL,
+				website_url text NOT NULL,
+				website_html longtext NOT NULL,
+				remove_comments enum('Y','N') NOT NULL DEFAULT 'Y',
+				remove_header enum('Y','N') NOT NULL DEFAULT 'Y',
+				remove_script enum('Y','N') NOT NULL DEFAULT 'Y',
+				remove_style enum('Y','N') NOT NULL DEFAULT 'Y',
+				remove_whitespace enum('Y','N') NOT NULL DEFAULT 'Y',
+				container_tag_name varchar(20) DEFAULT NULL,
+				container_attribute_name varchar(20) DEFAULT NULL,
+				container_attribute_value varchar(20) DEFAULT NULL,
+				item_tag_name varchar(20) DEFAULT NULL,
+				item_attribute_name varchar(20) DEFAULT NULL,
+				item_attribute_value varchar(20) DEFAULT NULL,
+				PRIMARY KEY (ID)
+			) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;";
+			
+			$result = $wpdb->query('query');
+			
+			// Create searchmeta table also
 		}
 		// END of activate()
 		
@@ -110,7 +140,7 @@ if(!class_exists('WP_HTML_Parser'))
 		 */
 		public static function deactivate()
 		{
-			// Do nothing
+			$wpdb->query('DROP TABLE IF EXISTS '.$wpdb->prefix.'searches');
 		}
 		// END of deactivate()
 		
@@ -868,6 +898,57 @@ if(!class_exists('WP_HTML_Parser'))
 		// END of save_HTML_with_URL($new_URL)
 		
 		
+		public function save_to_database( $search_author )
+		{
+			if (!is_numeric($search_author))
+			{
+				$search_author = 0;
+			}
+			
+			$query = "INSERT INTO ".$wpdb->prefix."searches (
+				ID,
+				search_author,
+				search_date,
+				search_date_gmt,
+				search_title,
+				website_url,
+				website_html,
+				remove_comments,
+				remove_header,
+				remove_script,
+				remove_style,
+				remove_whitespace,
+				container_tag_name,
+				container_attribute_name,
+				container_attribute_value,
+				item_tag_name,
+				item_attribute_name,
+				item_attribute_value
+			) VALUES (
+				null,
+				" . $search_author . ",
+				" . date('Y-m-d H:i:s') . ",
+				" . gmdate('Y-m-d H:i:s') . ",
+				TITLE,
+				" . $this->website_URL . ",
+				" . $this->website_HTML . ",
+				" . y_or_n($this->options['remove_comments']) . ",
+				" . y_or_n($this->options['remove_header']) . ",
+				" . y_or_n($this->options['remove_script']) . ",
+				" . y_or_n($this->options['remove_style']) . ",
+				" . y_or_n($this->options['remove_whitespace']) . ",
+				" . $this->options['container_tag_name'] . ",
+				" . $this->options['container_attribute_name'] . ",
+				" . $this->options['container_attribute_value'] . ",
+				" . $this->options['item_tag_name'] . ",
+				" . $this->options['item_attribute_name'] . ",
+				" . $this->options['item_attribute_value'] . "
+			)";
+			
+			$result = $wpdb->query( $query );
+		}
+		
+		
 		/**
 		 * [DESCRIPTION]
 		 */
@@ -936,39 +1017,9 @@ if(!class_exists('WP_HTML_Parser'))
 			if ($return_wp_error) {
 				return new WP_Error('set_options_error', 'ERROR: All options values must be true or false.');
 			}
-			/*
-			if (is_bool($remove_comments)) {
-				$this->options['remove_comments'] = $remove_comments;
-			} else {
-				$return_wp_error = true;
-			}
-			if (is_bool($remove_header)) {
-				$this->options['remove_header'] = $remove_header;
-			} else {
-				$return_wp_error = true;
-			}
-			if (is_bool($remove_script)) {
-				$this->options['remove_script'] = $remove_script;
-			} else {
-				$return_wp_error = true;
-			}
-			if (is_bool($remove_style)) {
-				$this->options['remove_style'] = $remove_style;
-			} else {
-				$return_wp_error = true;
-			}
-			if (is_bool($remove_whitespace)) {
-				$this->options['remove_whitespace'] = $remove_whitespace;
-			} else {
-				$return_wp_error = true;
-			}
-			if ($return_wp_error) {
-				return new WP_Error('set_options_error', 'ERROR: All options values must be true or false.');
-			}
-			*/
 			return true;
 		}
-		// END of set_options($remove_comments, $remove_header, $remove_script, $website_URL)
+		// END of set_options( $options )
 		
 		
 		/**
@@ -1066,6 +1117,11 @@ if(!class_exists('WP_HTML_Parser'))
 			return false;
 		}
 		// END of tag_has_attribute_name_and_value( $attribute_name, $attribute_value, $start )
+		
+		public function y_or_n( $bool )
+		{
+			return $bool ? 'Y' : 'N';
+		}
 	}
 	// END class WP_HTML_Parser	
 }
