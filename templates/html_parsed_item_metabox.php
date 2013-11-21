@@ -26,7 +26,7 @@
         <td>
             <input type="text" id="ASIN" name="ASIN" value="<?php echo @get_post_meta($post->ID, 'ASIN', true); ?>" />
         </td>
-    <tr> 
+    </tr> 
     <tr valign="top">
         <th class="metabox_label_column">
             <label for="amazon_price">Amazon Price</label>
@@ -34,7 +34,7 @@
         <td>
             <input type="text" id="amazon_price" name="amazon_price" value="<?php echo @get_post_meta($post->ID, 'amazon_price', true); ?>" />
         </td>
-    <tr>
+    </tr>
     <tr valign="top">
         <th class="metabox_label_column">
             <label for="amazon_old_price_old">Old Amazon Price</label>
@@ -42,7 +42,7 @@
         <td>
             <input type="text" id="amazon_old_price_old" name="amazon_old_price_old" value="<?php echo @get_post_meta($post->ID, 'amazon_old_price_old', true); ?>" />
         </td>
-    <tr>
+    </tr>
     <tr valign="top">
         <th class="metabox_label_column">
             <label for="category_URL">Category URL</label>
@@ -50,7 +50,7 @@
         <td>
             <input type="text" id="category_URL" name="category_URL" value="<?php echo @get_post_meta($post->ID, 'category_URL', true); ?>" />
         </td>
-    <tr>
+    </tr>
     <tr valign="top">
         <th class="metabox_label_column">
             <label for="comments_count">Number of Comments</label>
@@ -58,7 +58,7 @@
         <td>
             <input type="text" id="comments_count" name="comments_count" value="<?php echo @get_post_meta($post->ID, 'comments_count', true); ?>" />
         </td>
-    <tr>
+    </tr>
     <tr valign="top">
         <th class="metabox_label_column">
             <label for="comments_URL">Comments URL</label>
@@ -66,7 +66,7 @@
         <td>
             <input type="text" id="comments_URL" name="comments_URL" value="<?php echo @get_post_meta($post->ID, 'comments_URL', true); ?>" />
         </td>
-    <tr>
+    </tr>
     <tr valign="top">
         <th class="metabox_label_column">
             <label for="marketplace_price_new">Marketplace Price (New)</label>
@@ -74,7 +74,7 @@
         <td>
             <input type="text" id="marketplace_price_new" name="marketplace_price_new" value="<?php echo @get_post_meta($post->ID, 'marketplace_price_new', true); ?>" />
         </td>
-    <tr>
+    </tr>
     <tr valign="top">
         <th class="metabox_label_column">
             <label for="marketplace_price_used">Marketplace Price (Used)</label>
@@ -82,7 +82,7 @@
         <td>
             <input type="text" id="marketplace_price_used" name="marketplace_price_used" value="<?php echo @get_post_meta($post->ID, 'marketplace_price_used', true); ?>" />
         </td>
-    <tr>
+    </tr>
     <tr valign="top">
         <th class="metabox_label_column">
             <label for="seller_used_price">Seller Price (Used)</label>
@@ -90,7 +90,7 @@
         <td>
             <input type="text" id="seller_used_price" name="seller_used_price" value="<?php echo @get_post_meta($post->ID, 'seller_used_price', true); ?>" />
         </td>
-    <tr>                
+    </tr>                
 </table>
 <?php
 /*
